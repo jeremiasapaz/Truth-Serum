@@ -68,6 +68,7 @@ engine so the platform always works.
 | GET | `/api/compare/trend/{id}` | Score history (trend chart) |
 | POST | `/api/scoring/leader/{id}` | Re-run scoring (LLM or engine) |
 | GET | `/api/scoring/methodology` | Full scoring formula & weights |
+| GET | `/api/sources` | Public registry of every feed/API + ratings (Sources tab) |
 | GET | `/api/ingest/roster` | Real leaders available to ingest |
 | POST | `/api/ingest/leader/{slug}` | Ingest real evidence + score a leader |
 
@@ -113,10 +114,13 @@ Note on networks: GDELT/TV APIs are blocked on some corporate networks; set
 
 Measures whether a country's objective conditions improved, worsened, or stayed
 stable across an administration's lifecycle. Backbone data sources: **World Bank
-Open Data** + **Our World in Data** (both free, no key, full historical series) —
-every stored value keeps its dataset name + source URL, so no score exists
-without traceable data. OWID adds V-Dem electoral democracy, life
-satisfaction/wellbeing, and solar/hydro/EV series. Remaining metrics (PISA, RSF
+Open Data** + **Our World in Data** + **Eurostat** (all free, no key, full
+historical series) — every stored value keeps its dataset name + source URL, so
+no score exists without traceable data. OWID adds V-Dem electoral democracy, life
+satisfaction/wellbeing, and solar/hydro/EV series; Eurostat adds EU/UK housing
+(house price index). A public **Sources** tab (`/api/sources`) lists every feed,
+API, indicator dataset, and source rating with clickable links so anyone can
+verify the feeds are real. Remaining metrics (PISA, RSF
 Press Freedom, housing prices, wind/battery capacity) are catalogued as
 *pluggable*. The **Country Impact** tab has sub-dashboards: Administrations,
 Heatmap, Green Energy, and Citizen Reality.

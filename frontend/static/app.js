@@ -52,6 +52,7 @@ $$(".tab").forEach((t) =>
     if (t.dataset.view === "compare") renderComparePicker();
     if (t.dataset.view === "methodology") renderMethodology();
     if (t.dataset.view === "country") renderCountryTab();
+    if (t.dataset.view === "sources") renderSources();
   })
 );
 
@@ -479,6 +480,89 @@ async function renderMethodology() {
   Object.entries(m.source_ratings).sort((a, b) => b[1] - a[1]).forEach(([k, v]) =>
     srTable.append(el("tr", {}, el("td", {}, k), el("td", {}, v.toFixed(2)))));
   sr.append(srTable);
+  root.append(sr);
+}
+
+// ====================== Sources ======================
+async function renderSources() {
+  const d = await api("/api/sources");
+  const root = $("#sources");
+  root.innerHTML = "";
+  root.append(el("div", { class: "card" },
+    el("h2", {}, "Sources & feeds"),
+    el("p", { class: "principle" }, d.principle)));
+
+  // LLM
+  root.append(el("div", { class: "card" },
+    el("h2", {}, "AI model"),
+    el("p", { class: "muted" }, `Endpoint: ${d.llm.provider_base_url}`),
+    el("p", {}, d.llm.enabled ? `Active model: ${d.llm.model}` : "No LLM key set (classification/scoring disabled)."),
+    el("p", { class: "muted" }, d.llm.note)));
+
+  const statusDot = (active) => el("span", { style: `color:${active ? "var(--pos)" : "var(--warn)"}` }, active ? "● active" : "○ inactive");
+
+  // Evidence collectors
+  const ec = el("div", { class: "card" }, el("h2", {}, "Evidence collectors (Leaders)"));
+  const ecT = el("table", {}, el("tr", {}, el("th", {}, "Source"), el("th", {}, "Type"), el("th", {}, "Key"), el("th", {}, "Status"), el("th", {}, "Link")));
+  d.evidence_collectors.forEach((c) =>
+    ecT.append(el("tr", {},
+      el("td", {}, c.name),
+      el("td", {}, c.kind),
+      el("td", {}, c.keyless ? "keyless" : "needs key"),
+      el("td", {}, statusDot(c.active)),
+      el("td", {}, c.url ? el("a", { href: c.url, target: "_blank", style: "color:var(--accent)" }, "open") : "—"))));
+  ec.append(ecT);
+  root.append(ec);
+
+  // News feeds
+  const nf = el("div", { class: "card" }, el("h2", {}, `News feeds (${d.news_feeds.length}) — click to verify`));
+  const nfT = el("table", {}, el("tr", {}, el("th", {}, "Outlet"), el("th", {}, "Region"), el("th", {}, "Rating"), el("th", {}, "Feed URL")));
+  d.news_feeds.forEach((f) =>
+    nfT.append(el("tr", {},
+      el("td", {}, f.name + (f.state_media ? " ⚑ state media" : "")),
+      el("td", {}, f.region),
+      el("td", {}, f.rating.toFixed(2)),
+      el("td", {}, el("a", { href: f.url, target: "_blank", style: "color:var(--accent)" }, f.url)))));
+  nf.append(nfT);
+  root.append(nf);
+
+  // Country data providers
+  Object.entries(d.country_data).forEach(([provider, inds]) => {
+    if (!inds.length) return;
+    const c = el("div", { class: "card" }, el("h2", {}, `${provider} (${inds.length} indicators)`));
+    const t = el("table", {}, el("tr", {}, el("th", {}, "Indicator"), el("th", {}, "Category"), el("th", {}, "Dataset / link")));
+    inds.forEach((i) =>
+      t.append(el("tr", {},
+        el("td", {}, i.name + ` (${i.unit})`),
+        el("td", {}, i.category),
+        el("td", {}, el("a", { href: i.url, target: "_blank", style: "color:var(--accent)" }, "open dataset")))));
+    c.append(t);
+    root.append(c);
+  });
+
+  // Pluggable (declared, not yet live)
+  if (d.pluggable_indicators.length) {
+    const p = el("div", { class: "card" },
+      el("h2", {}, `Catalogued but not yet live (${d.pluggable_indicators.length})`),
+      el("p", { class: "muted" }, "Declared for transparency; need a non-free or not-yet-wired source."));
+    const t = el("table", {}, el("tr", {}, el("th", {}, "Indicator"), el("th", {}, "Category"), el("th", {}, "Intended source")));
+    d.pluggable_indicators.forEach((i) =>
+      t.append(el("tr", {}, el("td", {}, i.name), el("td", {}, i.category), el("td", {}, i.intended_source))));
+    p.append(t);
+    root.append(p);
+  }
+
+  // Source ratings
+  const sr = el("div", { class: "card" },
+    el("h2", {}, `Source reliability ratings (${d.source_ratings.length})`),
+    el("p", { class: "muted" }, "Used to weight evidence. State-controlled outlets are flagged and down-weighted."));
+  const srT = el("table", {}, el("tr", {}, el("th", {}, "Source"), el("th", {}, "Domain"), el("th", {}, "Rating")));
+  d.source_ratings.forEach((r) =>
+    srT.append(el("tr", {},
+      el("td", {}, r.name + (r.state_media ? " ⚑" : "")),
+      el("td", { class: "muted" }, r.domain),
+      el("td", {}, r.rating.toFixed(2)))));
+  sr.append(srT);
   root.append(sr);
 }
 

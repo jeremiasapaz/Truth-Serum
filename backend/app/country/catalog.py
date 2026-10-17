@@ -41,6 +41,12 @@ def OWID(code, name, category, unit, direction, slug, col_index=3):
                      provider_code=slug, col_index=col_index)
 
 
+def EUROSTAT(code, name, category, unit, direction, dataset):
+    return Indicator(code=code, name=name, category=category, unit=unit,
+                     direction=direction, source="eurostat",
+                     dataset=f"Eurostat: {dataset}", provider_code=dataset)
+
+
 def PLUG(code, name, category, unit, direction, src):
     return Indicator(code=code, name=name, category=category, unit=unit,
                      direction=direction, source=None, pluggable_source=src)
@@ -100,8 +106,8 @@ INDICATORS: list[Indicator] = [
 
     # ---- QUALITY OF LIFE ----
     # HOUSING (mostly pluggable; WB has little housing time series)
-    PLUG("HOUSE.PRICE", "House price index", "Housing", "index", "lower_better", "OECD/BIS"),
-    PLUG("RENT.PRICE", "Rent price index", "Housing", "index", "lower_better", "Numbeo/Eurostat"),
+    EUROSTAT("HOUSE.PRICE", "House price index (2015=100)", "Housing", "index", "lower_better", "prc_hpi_a"),
+    PLUG("RENT.PRICE", "Rent price index", "Housing", "index", "lower_better", "Eurostat HICP CP041"),
     PLUG("HOUSE.AFFORD", "Housing affordability", "Housing", "ratio", "higher_better", "OECD"),
     PLUG("HOME.OWN", "Home ownership rate", "Housing", "%", "higher_better", "OECD/Eurostat"),
     PLUG("HOUSE.SUPPLY", "New housing supply", "Housing", "units", "higher_better", "National stats"),
@@ -186,6 +192,10 @@ def wb_indicators() -> list[Indicator]:
 
 def owid_indicators() -> list[Indicator]:
     return [i for i in INDICATORS if i.source == "owid"]
+
+
+def eurostat_indicators() -> list[Indicator]:
+    return [i for i in INDICATORS if i.source == "eurostat"]
 
 
 def live_indicators() -> list[Indicator]:

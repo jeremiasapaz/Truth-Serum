@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from .config import get_settings
 from .country.seed import seed_administrations
 from .database import Base, SessionLocal, engine
-from .routers import compare, country, evidence, ingest, leaders, scoring
+from .routers import compare, country, evidence, ingest, leaders, scoring, sources
 from .seed import seed_if_empty
 
 app = FastAPI(
@@ -33,6 +33,7 @@ app.include_router(compare.router)
 app.include_router(scoring.router)
 app.include_router(ingest.router)
 app.include_router(country.router)
+app.include_router(sources.router)
 
 
 @app.on_event("startup")

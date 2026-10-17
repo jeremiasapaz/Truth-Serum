@@ -7,7 +7,8 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from .. import models
-from .catalog import owid_indicators, wb_series_codes
+from .catalog import eurostat_indicators, owid_indicators, wb_series_codes
+from .eurostat import fetch_series as fetch_eurostat
 from .owid import fetch_series as fetch_owid
 from .worldbank import fetch_series
 
@@ -55,8 +56,28 @@ def ingest_country(db: Session, iso3: str, start_year: int = 2000,
                 source_name=ow.source_name, source_url=ow.source_url,
             ))
             added += 1
+
+    # Eurostat series (EU/EEA + UK only; skipped elsewhere) — housing etc.
+    for ind in eurostat_indicators():
+        es = fetch_eurostat(iso3, ind.provider_code)
+        if es is None or not es.values:
+            continue
+        series_ok += 1
+        db.query(models.IndicatorValue).filter(
+            models.IndicatorValue.country_iso3 == iso3,
+            models.IndicatorValue.indicator_code == ind.code,
+        ).delete()
+        for year, value in es.values.items():
+            if year < start_year or year > end_year:
+                continue
+            db.add(models.IndicatorValue(
+                country_iso3=iso3, indicator_code=ind.code, year=year, value=value,
+                dataset_name=f"{ind.name} ({es.dataset})",
+                source_name=es.source_name, source_url=es.source_url,
+            ))
+            added += 1
     db.commit()
-    total = len(wb_series_codes()) + len(owid_indicators())
+    total = len(wb_series_codes()) + len(owid_indicators()) + len(eurostat_indicators())
     return {"country_iso3": iso3, "series_fetched": series_ok,
             "series_total": total, "values_added": added,
             "range": [start_year, end_year]}
