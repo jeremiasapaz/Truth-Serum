@@ -12,7 +12,7 @@ from ..country.catalog import (
     QOL_CATEGORIES,
     SUSTAINABILITY_INDICES,
 )
-from ..country.engine import analyze_administration
+from ..country.engine import analyze_administration, benchmark_administration
 from ..country.ingest import ingest_country
 from ..country.summary import generate_summary
 from ..database import get_db
@@ -125,6 +125,14 @@ def administration_summary(admin_id: int, db: Session = Depends(get_db)):
         return {"summary": "No indicator data ingested yet for this country. "
                 "Run ingestion first.", "generated_by": "none"}
     return generate_summary(analysis)
+
+
+@router.get("/administration/{admin_id}/benchmark")
+def administration_benchmark(admin_id: int, db: Session = Depends(get_db)):
+    admin = db.get(models.Administration, admin_id)
+    if not admin:
+        raise HTTPException(status_code=404, detail="Administration not found")
+    return benchmark_administration(db, admin)
 
 
 @router.get("/compare")

@@ -619,6 +619,21 @@ async function openAdministration(id) {
     }, { scales: { r: { min: 0, max: 100, grid: { color: "#2d3a48" }, angleLines: { color: "#2d3a48" }, pointLabels: { color: "#e6edf3", font: { size: 10 } }, ticks: { color: "#8b98a8", backdropColor: "transparent" } } }, plugins: { legend: { labels: { color: "#e6edf3" } } } });
   }, 50);
 
+  // Benchmarks: admin vs country historical vs regional average
+  panel.append(el("h3", { style: "margin-top:18px" }, "Benchmarks (vs history & region)"));
+  panel.append(el("div", { class: "chart-card" }, el("canvas", { id: "c-bench" })));
+  api("/api/country/administration/" + id + "/benchmark").then((bm) => {
+    const bc = bm.categories;
+    drawChart("c-bench", "radar", {
+      labels: bc,
+      datasets: [
+        { label: a.leader_name, data: bc.map((c) => bm.administration_scores[c] ?? 0), borderColor: "#4f9cf9", backgroundColor: "#4f9cf922" },
+        { label: "Country historical avg", data: bc.map((c) => bm.country_historical_average[c] ?? 0), borderColor: "#d29922", backgroundColor: "#d2992222" },
+        { label: `${bm.region} regional avg`, data: bc.map((c) => bm.regional_average[c] ?? 0), borderColor: "#a371f7", backgroundColor: "#a371f722" },
+      ],
+    }, { scales: { r: { min: 0, max: 100, grid: { color: "#2d3a48" }, angleLines: { color: "#2d3a48" }, pointLabels: { color: "#e6edf3", font: { size: 10 } }, ticks: { color: "#8b98a8", backdropColor: "transparent" } } }, plugins: { legend: { labels: { color: "#e6edf3", boxWidth: 12, font: { size: 10 } } } } });
+  });
+
   // Indicator table with sources + CSV
   panel.append(el("div", { style: "display:flex;justify-content:space-between;align-items:center;margin-top:18px" },
     el("h3", {}, "Indicators & sources"),

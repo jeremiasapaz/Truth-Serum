@@ -28,7 +28,7 @@ from .catalog import (
     QOL_CATEGORIES,
     SUSTAINABILITY_INDICES,
     by_code,
-    wb_indicators,
+    live_indicators,
 )
 
 # Major global shocks (year -> label) used to contextualize, not excuse.
@@ -94,6 +94,52 @@ def _load_series(db: Session, iso3: str) -> dict[str, dict[int, float]]:
     return out
 
 
+def country_historical_scores(db: Session, iso3: str) -> dict[str, float]:
+    """Per-category normalized score of each indicator's full-history mean."""
+    series_map = _load_series(db, iso3)
+    series_map.pop("__meta__", {})  # type: ignore
+    cat: dict[str, list[float]] = {}
+    for ind in live_indicators():
+        series = ind.code.split("|")[0]
+        values = series_map.get(series)
+        if not values:
+            continue
+        s = _normalize(mean(values.values()), values, ind.direction)
+        if s is not None:
+            cat.setdefault(ind.category, []).append(s)
+    return {c: round(mean(v), 1) for c, v in cat.items()}
+
+
+def regional_average_scores(db: Session, continent: str, exclude_id: int | None = None) -> dict[str, float]:
+    """Average administration category scores across a continent."""
+    admins = (
+        db.query(models.Administration)
+        .filter(models.Administration.continent == continent)
+        .all()
+    )
+    agg: dict[str, list[float]] = {}
+    for a in admins:
+        if exclude_id and a.id == exclude_id:
+            continue
+        an = analyze_administration(db, a)
+        for c, v in {**an["category_scores"], **an["qol_scores"]}.items():
+            agg.setdefault(c, []).append(v["score"])
+    return {c: round(mean(v), 1) for c, v in agg.items() if v}
+
+
+def benchmark_administration(db: Session, admin: models.Administration) -> dict:
+    an = analyze_administration(db, admin)
+    admin_cats = {c: v["score"] for c, v in {**an["category_scores"], **an["qol_scores"]}.items()}
+    return {
+        "administration": an["administration"],
+        "region": admin.continent,
+        "categories": PERFORMANCE_CATEGORIES,
+        "administration_scores": admin_cats,
+        "country_historical_average": country_historical_scores(db, admin.country_iso3),
+        "regional_average": regional_average_scores(db, admin.continent, exclude_id=admin.id),
+    }
+
+
 def analyze_administration(db: Session, admin: models.Administration) -> dict:
     periods = compute_periods(admin)
     series_map = _load_series(db, admin.country_iso3)
@@ -107,7 +153,7 @@ def analyze_administration(db: Session, admin: models.Administration) -> dict:
     cat_admin: dict[str, list[float]] = {}
     cat_delta: dict[str, list[float]] = {}
 
-    for ind in wb_indicators():
+    for ind in live_indicators():
         series = ind.code.split("|")[0]
         values = series_map.get(series)
         if not values:
@@ -217,7 +263,7 @@ def analyze_administration(db: Session, admin: models.Administration) -> dict:
         "note": "Estimated administrative influence, not a claim of direct causation.",
     }
 
-    total_wb = len(wb_indicators())
+    total_wb = len(live_indicators())
     coverage_n = len(indicator_results)
     confidence = round(min(100.0, coverage_n / total_wb * 100) * 0.95, 1)
 

@@ -22,16 +22,23 @@ class Indicator:
     category: str        # performance/QoL/green group
     unit: str
     direction: str       # higher_better | lower_better
-    source: str | None   # "worldbank" | None (pluggable)
+    source: str | None   # "worldbank" | "owid" | None (pluggable)
     dataset: str = ""
-    provider_code: str = ""   # provider-specific code (e.g. WB series id)
+    provider_code: str = ""   # provider series id / OWID grapher slug
     pluggable_source: str = ""  # intended source if not yet wired
+    col_index: int = 3        # OWID CSV value column index (Entity,Code,Year,<value>)
 
 
 def WB(code, name, category, unit, direction, dataset="World Bank Open Data"):
     return Indicator(code=code, name=name, category=category, unit=unit,
                      direction=direction, source="worldbank", dataset=dataset,
                      provider_code=code)
+
+
+def OWID(code, name, category, unit, direction, slug, col_index=3):
+    return Indicator(code=code, name=name, category=category, unit=unit,
+                     direction=direction, source="owid", dataset=f"Our World in Data: {slug}",
+                     provider_code=slug, col_index=col_index)
 
 
 def PLUG(code, name, category, unit, direction, src):
@@ -79,7 +86,8 @@ INDICATORS: list[Indicator] = [
        dataset="World Bank Worldwide Governance Indicators"),
     WB("VA.EST", "Voice & Accountability (WGI)", "Democracy", "z-score", "higher_better",
        dataset="World Bank Worldwide Governance Indicators"),
-    PLUG("EIU.DEMOC", "Democracy Index", "Democracy", "0-10", "higher_better", "EIU"),
+    OWID("VDEM.EDI", "Electoral Democracy Index (V-Dem)", "Democracy", "0-1", "higher_better",
+         "electoral-democracy-index"),
     PLUG("RSF.PRESS", "Press Freedom Index", "Democracy", "score", "higher_better", "RSF"),
     PLUG("ELECT.INTEG", "Electoral integrity (PEI)", "Democracy", "index", "higher_better", "EIP"),
 
@@ -117,19 +125,23 @@ INDICATORS: list[Indicator] = [
     PLUG("SAVINGS.RATE", "Household savings rate", "Personal Wealth", "%", "higher_better", "OECD"),
 
     # WELLBEING
-    PLUG("HAPPY.RANK", "World Happiness score", "Wellbeing", "0-10", "higher_better", "World Happiness Report"),
-    PLUG("LIFE.SAT", "Life satisfaction", "Wellbeing", "0-10", "higher_better", "OECD/Gallup"),
+    OWID("HAPPY.RANK", "Self-reported life satisfaction", "Wellbeing", "0-10", "higher_better",
+         "happiness-cantril-ladder"),
+    PLUG("LIFE.SAT", "Life satisfaction (OECD)", "Wellbeing", "0-10", "higher_better", "OECD/Gallup"),
 
     # ---- GREEN ENERGY & SUSTAINABILITY ----
     WB("EG.FEC.RNEW.ZS", "Renewable energy share", "Green Energy", "% final energy", "higher_better"),
     WB("EG.ELC.RNEW.ZS", "Renewable electricity output", "Green Energy", "% of total", "higher_better"),
     WB("EG.ELC.ACCS.ZS", "Access to electricity", "Green Energy", "% pop", "higher_better"),
     WB("EN.GHG.CO2.PC.CE|GE", "CO2 per capita (trend)", "Green Energy", "t/capita", "lower_better"),
-    PLUG("SOLAR.CAP", "Solar capacity", "Green Energy", "MW", "higher_better", "IRENA"),
+    OWID("SOLAR.CAP", "Solar energy consumption", "Green Energy", "TWh", "higher_better",
+         "solar-energy-consumption"),
     PLUG("WIND.CAP", "Wind capacity", "Green Energy", "MW", "higher_better", "IRENA"),
-    PLUG("HYDRO.GEN", "Hydroelectric generation", "Green Energy", "GWh", "higher_better", "IRENA/IEA"),
+    OWID("HYDRO.GEN", "Hydropower consumption", "Green Energy", "TWh", "higher_better",
+         "hydropower-consumption"),
     PLUG("BATTERY.CAP", "Battery storage capacity", "Green Energy", "MWh", "higher_better", "IEA"),
-    PLUG("EV.ADOPT", "EV adoption rate", "Green Energy", "% new sales", "higher_better", "IEA"),
+    OWID("EV.ADOPT", "EV sales share", "Green Energy", "% new cars", "higher_better",
+         "electric-car-sales-share"),
     PLUG("EV.CHARGERS", "Charging infrastructure", "Green Energy", "count", "higher_better", "IEA"),
     PLUG("GREEN.INVEST", "Green investment spending", "Green Energy", "USD", "higher_better", "BNEF/IEA"),
 ]
@@ -170,6 +182,14 @@ def by_code() -> dict[str, Indicator]:
 
 def wb_indicators() -> list[Indicator]:
     return [i for i in INDICATORS if i.source == "worldbank"]
+
+
+def owid_indicators() -> list[Indicator]:
+    return [i for i in INDICATORS if i.source == "owid"]
+
+
+def live_indicators() -> list[Indicator]:
+    return [i for i in INDICATORS if i.source is not None]
 
 
 def wb_series_codes() -> list[str]:
