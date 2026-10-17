@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leader Transparency Scoring Platform</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◎</span>
+      <div>
+        <h1>Leader Transparency</h1>
+        <p class="tagline">Scores from documented evidence &amp; source weighting — not legal guilt.</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-view="dashboard">Dashboard</button>
+      <button class="tab" data-view="compare">Compare</button>
+      <button class="tab" data-view="methodology">Methodology</button>
+    </nav>
+    <div class="llm-badge" id="llm-badge" title="LLM scoring status">…</div>
+  </header>
+
+  <main id="app">
+    <!-- Dashboard -->
+    <section id="view-dashboard" class="view active">
+      <aside class="filters" id="filters"></aside>
+      <div class="content">
+        <div class="list-header">
+          <h2>Leaders <span class="muted" id="result-count"></span></h2>
+          <div class="list-actions">
+            <input type="search" id="keyword" placeholder="Keyword search…" />
+            <select id="sort"></select>
+          </div>
+        </div>
+        <div id="leader-grid" class="leader-grid"></div>
+      </div>
+    </section>
+
+    <!-- Compare -->
+    <section id="view-compare" class="view">
+      <div class="compare-bar">
+        <h2>Compare Leaders <span class="muted">(up to 10)</span></h2>
+        <div id="compare-picker" class="compare-picker"></div>
+      </div>
+      <div id="compare-empty" class="empty">Select 2+ leaders to compare.</div>
+      <div id="compare-charts" class="compare-charts" style="display:none">
+        <div class="chart-card"><h3>Radar — category scores</h3><canvas id="chart-radar"></canvas></div>
+        <div class="chart-card"><h3>Bar — total score</h3><canvas id="chart-bar"></canvas></div>
+        <div class="chart-card wide"><h3>Heatmap — scores by category</h3><div id="heatmap"></div></div>
+        <div class="chart-card wide"><h3>Trend — score history</h3>
+          <div class="trend-controls">
+            <select id="trend-leader"></select>
+            <select id="trend-category"></select>
+          </div>
+          <canvas id="chart-trend"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Methodology -->
+    <section id="view-methodology" class="view">
+      <div id="methodology" class="methodology"></div>
+    </section>
+  </main>
+
+  <!-- Leader detail drawer -->
+  <div id="drawer" class="drawer">
+    <div class="drawer-panel" id="drawer-panel"></div>
+  </div>
+  <div id="overlay" class="overlay"></div>
+
+  <!-- Evidence modal -->
+  <div id="evidence-modal" class="modal">
+    <div class="modal-panel" id="evidence-panel"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
