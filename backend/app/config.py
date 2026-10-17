@@ -18,9 +18,15 @@ class Settings(BaseSettings):
     # Optional news API keys for the (pluggable) news collectors.
     gnews_api_key: str = ""
     newsapi_key: str = ""
+    newsdata_api_key: str = ""
+    mediastack_api_key: str = ""
+    currents_api_key: str = ""
 
     # Default lookback window for collectors that support it.
     ingest_timespan: str = "12m"
+
+    # Max items taken from each individual news source (bounds LLM cost).
+    max_items_per_source: int = 60
 
     @property
     def llm_enabled(self) -> bool:

@@ -68,5 +68,43 @@ engine so the platform always works.
 | GET | `/api/compare/trend/{id}` | Score history (trend chart) |
 | POST | `/api/scoring/leader/{id}` | Re-run scoring (LLM or engine) |
 | GET | `/api/scoring/methodology` | Full scoring formula & weights |
+| GET | `/api/ingest/roster` | Real leaders available to ingest |
+| POST | `/api/ingest/leader/{slug}` | Ingest real evidence + score a leader |
 
 Interactive API docs: http://127.0.0.1:8077/docs
+
+## Real-evidence ingestion
+
+Retrieval-augmented pipeline (`app/ingest/`): collectors fetch **real documents
+tied to real URLs**, an LLM extracts evidence **strictly grounded in the source
+text** (category + classification + polarity), records are stored with source
+rating/date/URL, then the leader is scored. The LLM never invents facts; if no
+`LLM_API_KEY` is set, ingestion refuses to auto-tag real people.
+
+**Sources (cross-checked across as many outlets as possible):**
+
+- *Keyless, work out of the box:* Wikipedia, **Google News RSS** (per-country +
+  per-language — local & foreign press/magazines across thousands of outlets),
+  **Bing News RSS**, and direct outlet/TV RSS feeds (BBC, Al Jazeera, Reuters,
+  The Guardian, France 24, DW, Sky, Folha, G1, Agência Brasil, RTÉ, Irish Times,
+  SCMP, Japan Times, Times of Israel, Haaretz, PBS, Politico, …).
+- *Keyless but often firewall-blocked on corporate networks:* GDELT.
+- *Optional keyed aggregators (each spans many outlets):* GNews, NewsAPI,
+  NewsData, Mediastack, Currents — add keys in `.env` to widen coverage.
+
+Each source is rated (`DOMAIN_RATINGS`); state-controlled outlets are flagged and
+down-weighted. The engine already rewards **independent-source corroboration**
+(source quantity + consistency), so the same claim reported by many outlets
+raises confidence, while single-source claims are discounted.
+
+**Run ingestion** (needs `LLM_API_KEY`):
+
+```bash
+cd backend
+python -m app.ingest.run --pilot              # Lula, Jair & Flavio Bolsonaro
+python -m app.ingest.run lula --no-news       # Wikipedia only (fewer LLM calls)
+python -m app.ingest.run --all                # full roster
+```
+
+Note on networks: GDELT/TV APIs are blocked on some corporate networks; set
+`VERIFY_SSL=false` behind a TLS-intercepting proxy.

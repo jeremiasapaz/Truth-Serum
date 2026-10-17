@@ -9,6 +9,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+# Google News locales to query per country: local + international (en-US always).
+COUNTRY_LOCALES: dict[str, list[tuple[str, str]]] = {
+    "Brazil": [("en-US", "US"), ("pt-BR", "BR")],
+    "United States": [("en-US", "US")],
+    "Russia": [("en-US", "US"), ("ru-RU", "RU")],
+    "China": [("en-US", "US"), ("zh-CN", "CN")],
+    "North Korea": [("en-US", "US"), ("ko-KR", "KR")],
+    "Israel": [("en-US", "US"), ("he-IL", "IL")],
+    "Palestine": [("en-US", "US"), ("ar-EG", "EG")],
+    "Ireland": [("en-US", "US"), ("en-IE", "IE")],
+    "United Kingdom": [("en-US", "US"), ("en-GB", "GB")],
+}
+
 
 @dataclass
 class LeaderSpec:
@@ -24,7 +37,16 @@ class LeaderSpec:
     news_query: str
     bio: str = ""
     pilot: bool = False
-    extra_domains: list[str] = field(default_factory=list)
+    name_terms: list[str] = field(default_factory=list)
+
+    def locales(self) -> list[tuple[str, str]]:
+        return COUNTRY_LOCALES.get(self.country, [("en-US", "US")])
+
+    def terms(self) -> list[str]:
+        if self.name_terms:
+            return self.name_terms
+        parts = self.name.split()
+        return [self.name] + ([parts[-1]] if len(parts) > 1 else [])
 
 
 ROSTER: dict[str, LeaderSpec] = {

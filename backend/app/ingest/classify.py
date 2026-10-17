@@ -99,6 +99,75 @@ def _call_llm(messages: list[dict]) -> dict:
     return json.loads(content)
 
 
+BATCH_SYSTEM_PROMPT = f"""You triage short news items for transparency evidence about a leader.
+
+You are given a NUMBERED list of news items (headline + snippet). For EACH item
+that contains a concrete, transparency-relevant claim about the named leader,
+output one record. Skip items that are irrelevant, generic, or not about the
+leader (output nothing for them).
+
+RULES (same taxonomy as the full extractor):
+- Only use what the item text states. Never invent facts.
+- CATEGORY must be one of: {CATEGORIES}
+- CLASSIFICATION must be one of: {_CLASSIFICATIONS}
+  (news wording like "alleged" -> REPORTED ALLEGATION; court ruling -> COURT RECORD;
+  probe/charges -> ONGOING INVESTIGATION; general reporting -> MEDIA REPORT.)
+- POLARITY: -1 negative, +1 positive, 0 neutral/mixed (for the category).
+- "claim": one concise sentence (<=240 chars), paraphrased from the item.
+
+Return STRICT JSON: {{"items":[{{"index","category","classification","polarity","claim"}}]}}
+where "index" is the item number you are classifying.
+"""
+
+
+def classify_articles(leader_name: str, docs: list[RawDoc], batch_size: int = 12):
+    """Batch-classify short article docs. Yields (doc, ExtractedEvidence) pairs."""
+    settings = get_settings()
+    if not settings.llm_enabled or not docs:
+        return
+    cat_set, class_set = set(CATEGORIES), set(_CLASSIFICATIONS)
+
+    for start in range(0, len(docs), batch_size):
+        batch = docs[start : start + batch_size]
+        listing = "\n".join(
+            f"[{i}] {d.text[:400]} (source: {d.source_name})" for i, d in enumerate(batch)
+        )
+        user = (
+            f"Leader under review: {leader_name}\n\n"
+            f"NEWS ITEMS:\n{listing}\n\nClassify now."
+        )
+        try:
+            parsed = _call_llm(
+                [{"role": "system", "content": BATCH_SYSTEM_PROMPT},
+                 {"role": "user", "content": user}]
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"[classify-batch] skipped: {type(exc).__name__}: {str(exc)[:80]}")
+            continue
+
+        for item in parsed.get("items", []):
+            try:
+                idx = int(item.get("index"))
+            except (TypeError, ValueError):
+                continue
+            if not (0 <= idx < len(batch)):
+                continue
+            cat = str(item.get("category", "")).strip()
+            cls = str(item.get("classification", "")).strip().upper()
+            try:
+                pol = int(item.get("polarity", 0))
+            except (TypeError, ValueError):
+                pol = 0
+            claim = str(item.get("claim", "")).strip()
+            if cat not in cat_set or cls not in class_set or pol not in (-1, 0, 1) or not claim:
+                continue
+            doc = batch[idx]
+            yield doc, ExtractedEvidence(
+                category=cat, classification=cls, polarity=pol,
+                claim=claim, date=doc.published_at,
+            )
+
+
 def extract_evidence(leader_name: str, doc: RawDoc) -> list[ExtractedEvidence]:
     """Extract evidence items from a single document, grounded in its text."""
     settings = get_settings()
