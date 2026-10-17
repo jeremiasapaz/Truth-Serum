@@ -8,8 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from .config import get_settings
 from .country.seed import seed_administrations
 from .database import Base, SessionLocal, engine
+from .ingest.seed_leaders import ensure_real_leaders
 from .routers import compare, country, evidence, ingest, leaders, scoring, sources
-from .seed import seed_if_empty
 
 app = FastAPI(
     title="Truth Serum",
@@ -41,7 +41,7 @@ def on_startup():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        seed_if_empty(db)
+        ensure_real_leaders(db)   # real roster (replaces fictional demo leaders)
         seed_administrations(db)
     finally:
         db.close()
