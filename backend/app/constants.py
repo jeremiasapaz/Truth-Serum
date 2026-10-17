@@ -180,6 +180,17 @@ DOMAIN_RATINGS = {
     "poder360.com.br": ("Poder360", 0.70),
     "bbc.com/portuguese": ("BBC Brasil", 0.86),
     "agenciabrasil.ebc.com.br": ("Agência Brasil", 0.78),
+    "valor.globo.com": ("Valor Econômico", 0.80),
+    "exame.com": ("Exame", 0.72),
+    "istoe.com.br": ("ISTOÉ", 0.62),
+    "jovempan.com.br": ("Jovem Pan", 0.52),
+    "brasildefato.com.br": ("Brasil de Fato", 0.55),
+    "r7.com": ("R7 / Record", 0.55),
+    "band.uol.com.br": ("Band", 0.60),
+    "correiobraziliense.com.br": ("Correio Braziliense", 0.70),
+    "jb.com.br": ("Jornal do Brasil", 0.62),
+    "cultura.uol.com.br": ("TV Cultura", 0.70),
+    "tvbrasil.ebc.com.br": ("TV Brasil (EBC)", 0.72),
 }
 
 # State-controlled / low-independence outlets: flag so the UI and scoring can
