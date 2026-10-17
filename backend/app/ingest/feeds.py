@@ -26,6 +26,7 @@ REGION_FEEDS: dict[str, list[tuple[str, str]]] = {
         ("G1 (Globo)", "https://g1.globo.com/rss/g1/politica/"),
         ("Folha - Poder", "https://feeds.folha.uol.com.br/poder/rss091.xml"),
         ("Agência Brasil", "https://agenciabrasil.ebc.com.br/rss.xml"),
+        ("Agência Pública", "https://apublica.org/feed/"),
     ],
     "Europe": [
         ("The Irish Times", "https://www.irishtimes.com/cmlink/news-1.1319192"),
