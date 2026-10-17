@@ -180,3 +180,11 @@ h1, h2, h3 { margin: 0; }
 .methodology th, .methodology td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; }
 .weight-bar { display: inline-block; height: 8px; background: var(--accent); border-radius: 4px; vertical-align: middle; margin-left: 8px; }
 .principle { font-size: 16px; color: var(--accent); font-weight: 600; line-height: 1.5; }
+
+/* Country Impact */
+.gauges { display: flex; gap: 10px; flex-wrap: wrap; }
+.gauge { flex: 1; min-width: 90px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; }
+.gauge-val { font-size: 24px; font-weight: 700; }
+.ind-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.ind-table th, .ind-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.ind-table th { color: var(--muted); font-weight: 600; }

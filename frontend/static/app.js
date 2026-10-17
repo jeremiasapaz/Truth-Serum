@@ -51,6 +51,7 @@ $$(".tab").forEach((t) =>
     $("#view-" + t.dataset.view).classList.add("active");
     if (t.dataset.view === "compare") renderComparePicker();
     if (t.dataset.view === "methodology") renderMethodology();
+    if (t.dataset.view === "country") renderCountryTab();
   })
 );
 
@@ -480,5 +481,208 @@ async function renderMethodology() {
   sr.append(srTable);
   root.append(sr);
 }
+
+// ====================== Country Impact ======================
+const countryState = { selected: new Set(), initialized: false };
+const PERF_CATS = ["Security", "Education", "Health", "Economy", "Democracy", "Environment"];
+
+async function renderCountryTab() {
+  if (!countryState.initialized) {
+    const opts = await api("/api/country/filters/options");
+    const cf = $("#country-filter");
+    cf.append(el("option", { value: "" }, "All countries"));
+    opts.countries.forEach((c) => cf.append(el("option", { value: c }, c)));
+    const sortLabels = {
+      name: "Name", leader_impact_desc: "Highest Leader Impact",
+      citizen_reality_desc: "Highest Citizen Reality", best_economy: "Best Economy",
+      best_health: "Best Healthcare", best_education: "Best Education",
+      best_security: "Best Security", best_housing: "Best Housing",
+      best_cost_of_living: "Best Cost of Living", best_green_energy: "Best Green Energy",
+      most_improved: "Most Improved", most_declined: "Most Declined",
+    };
+    const cs = $("#country-sort");
+    opts.sorts.forEach((s) => cs.append(el("option", { value: s }, sortLabels[s] || s)));
+    cs.value = "leader_impact_desc";
+    cf.onchange = cs.onchange = loadAdministrations;
+    countryState.initialized = true;
+  }
+  await loadAdministrations();
+}
+
+async function loadAdministrations() {
+  const p = new URLSearchParams();
+  const c = $("#country-filter").value;
+  if (c) p.set("country", c);
+  p.set("sort", $("#country-sort").value);
+  const admins = await api("/api/country/administrations?" + p.toString());
+  const grid = $("#country-grid");
+  grid.innerHTML = "";
+  admins.forEach((a) => grid.append(adminCard(a)));
+}
+
+function gauge(label, value, range) {
+  const v = value == null ? "—" : value;
+  const color = range === "lis" ? totalColor(value || 0)
+    : value == null ? "#8b98a8" : value >= 60 ? "#3fb950" : value >= 40 ? "#d29922" : "#f85149";
+  return el("div", { class: "gauge" },
+    el("div", { class: "gauge-val", style: `color:${color}` }, v === "—" ? v : (range === "lis" && value > 0 ? "+" + v : "" + v)),
+    el("div", { class: "muted" }, label));
+}
+
+function adminCard(a) {
+  const card = el("div", { class: "leader-card" });
+  const picked = countryState.selected.has(a.id);
+  card.append(el("div", { class: "lc-head" },
+    el("div", {},
+      el("h3", {}, a.leader_name),
+      el("div", { class: "sub" }, `${a.country} · ${a.office || ""}`),
+      el("div", { class: "sub" }, `${a.start} → ${a.end || "present"}`)),
+    el("span", { class: "pick" + (picked ? " selected" : ""), onclick: (e) => { e.stopPropagation(); toggleAdminCompare(a.id); } },
+      picked ? "✓ compare" : "+ compare")));
+  if (!a.has_data) {
+    card.append(el("div", { class: "sub", style: "margin:10px 0;color:var(--warn)" }, "No data ingested yet"));
+    const b = el("button", { class: "btn", onclick: (e) => { e.stopPropagation(); ingestAdmin(a.id, b); } }, "Ingest World Bank data");
+    card.append(b);
+  } else {
+    card.append(el("div", { class: "gauges" },
+      gauge("Citizen Reality", a.citizen_reality_score),
+      gauge("Leader Impact", a.leader_impact_score, "lis"),
+      gauge("Green Energy", a.green_energy_index)));
+    card.append(el("div", { class: "sub", style: "margin-top:8px" }, `Confidence ${a.confidence}% · ${a.coverage.available} indicators`));
+  }
+  card.onclick = () => openAdministration(a.id);
+  return card;
+}
+
+async function ingestAdmin(id, btn) {
+  btn.disabled = true; btn.textContent = "Ingesting World Bank data…";
+  try {
+    const res = await fetch(API + "/api/country/ingest/" + id, { method: "POST" }).then((r) => r.json());
+    btn.textContent = `Ingested ${res.values_added} values`;
+    await loadAdministrations();
+  } catch (e) { btn.textContent = "Error — retry"; btn.disabled = false; }
+}
+
+async function openAdministration(id) {
+  const d = await api("/api/country/administration/" + id);
+  const panel = $("#drawer-panel");
+  panel.innerHTML = "";
+  panel.append(el("button", { class: "close", onclick: closeDrawer }, "×"));
+  const a = d.administration;
+  panel.append(el("div", { class: "detail-head" },
+    el("h2", {}, a.leader_name),
+    el("div", { class: "sub" }, `${a.country} · ${a.office || ""} · ${a.party || ""}`),
+    el("div", { class: "sub" }, `${a.start} → ${a.end || "present"}` +
+      (a.predecessor ? ` · after ${a.predecessor}` : ""))));
+
+  if (!d.indicators.length) {
+    const b = el("button", { class: "btn", onclick: () => ingestAdmin(id, b) }, "Ingest World Bank data");
+    panel.append(el("p", { class: "sub", style: "margin:14px 0" }, "No indicator data yet."), b);
+    $("#drawer").classList.add("show"); $("#overlay").classList.add("show");
+    return;
+  }
+
+  panel.append(el("div", { class: "gauges", style: "margin:16px 0" },
+    gauge("Citizen Reality", d.citizen_reality_score.score),
+    gauge("Leader Impact", d.leader_impact_score.value, "lis"),
+    gauge("Green Energy", d.green_energy_index.score),
+    gauge("Confidence", d.confidence)));
+
+  if (d.shocks_during_office.length)
+    panel.append(el("div", { class: "cat-reason" }, "Global context during term: " + d.shocks_during_office.join(", ") +
+      ". Impact is estimated, not attributed as direct causation."));
+
+  // AI summary
+  const sumBox = el("div", { class: "cat-reason", style: "white-space:pre-line" }, "Generating summary…");
+  panel.append(el("h3", { style: "margin-top:16px" }, "Administration summary"), sumBox);
+  api("/api/country/administration/" + id + "/summary").then((s) => {
+    sumBox.textContent = s.summary + (s.generated_by ? `\n\n[${s.generated_by}]` : "");
+  });
+
+  // Before vs After bars + radar
+  panel.append(el("h3", { style: "margin-top:18px" }, "Before vs after (by category)"));
+  panel.append(el("div", { class: "chart-card" }, el("canvas", { id: "c-beforeafter" })));
+  panel.append(el("div", { class: "chart-card" }, el("canvas", { id: "c-radar2" })));
+
+  const cats = Object.keys(d.category_scores);
+  setTimeout(() => {
+    drawChart("c-beforeafter", "bar", {
+      labels: cats,
+      datasets: [
+        { label: "Baseline", data: cats.map((c) => round1(d.category_scores[c].score - (d.category_scores[c].delta || 0))), backgroundColor: "#8b98a8" },
+        { label: "Administration", data: cats.map((c) => d.category_scores[c].score), backgroundColor: "#4f9cf9" },
+      ],
+    }, { scales: { y: { min: 0, max: 100, grid: { color: "#2d3a48" }, ticks: { color: "#8b98a8" } }, x: { ticks: { color: "#e6edf3" } } }, plugins: { legend: { labels: { color: "#e6edf3" } } } });
+    drawChart("c-radar2", "radar", {
+      labels: cats,
+      datasets: [{ label: "Category score", data: cats.map((c) => d.category_scores[c].score), borderColor: "#3fb950", backgroundColor: "#3fb95022" }],
+    }, { scales: { r: { min: 0, max: 100, grid: { color: "#2d3a48" }, angleLines: { color: "#2d3a48" }, pointLabels: { color: "#e6edf3", font: { size: 10 } }, ticks: { color: "#8b98a8", backdropColor: "transparent" } } }, plugins: { legend: { labels: { color: "#e6edf3" } } } });
+  }, 50);
+
+  // Indicator table with sources + CSV
+  panel.append(el("div", { style: "display:flex;justify-content:space-between;align-items:center;margin-top:18px" },
+    el("h3", {}, "Indicators & sources"),
+    el("a", { class: "btn secondary", href: API + "/api/country/administration/" + id + "/export.csv" }, "Download CSV")));
+  const tbl = el("table", { class: "ind-table" },
+    el("tr", {}, el("th", {}, "Indicator"), el("th", {}, "Baseline"), el("th", {}, "Admin"), el("th", {}, "Δ"), el("th", {}, "Source")));
+  d.indicators.forEach((i) => {
+    tbl.append(el("tr", {},
+      el("td", {}, i.name + ` (${i.unit})`),
+      el("td", {}, fmt(i.baseline_mean)),
+      el("td", {}, fmt(i.admin_mean)),
+      el("td", { style: `color:${(i.delta || 0) >= 0 ? "var(--pos)" : "var(--neg)"}` }, i.delta == null ? "—" : (i.delta > 0 ? "+" : "") + i.delta),
+      el("td", {}, i.source_url ? el("a", { href: i.source_url, target: "_blank", style: "color:var(--accent)" }, i.source_name) : i.source_name)));
+  });
+  panel.append(el("div", { style: "overflow-x:auto" }, tbl));
+
+  $("#drawer").classList.add("show");
+  $("#overlay").classList.add("show");
+}
+
+function toggleAdminCompare(id) {
+  if (countryState.selected.has(id)) countryState.selected.delete(id);
+  else if (countryState.selected.size < 10) countryState.selected.add(id);
+  loadAdministrations();
+  if (countryState.selected.size >= 2) openAdminCompare();
+}
+
+async function openAdminCompare() {
+  const ids = [...countryState.selected];
+  const d = await api("/api/country/compare?" + ids.map((i) => "ids=" + i).join("&"));
+  const panel = $("#drawer-panel");
+  panel.innerHTML = "";
+  panel.append(el("button", { class: "close", onclick: closeDrawer }, "×"));
+  panel.append(el("h2", {}, "Administration comparison"));
+  const admins = d.administrations;
+  const palette = ["#4f9cf9", "#3fb950", "#f85149", "#d29922", "#a371f7"];
+
+  panel.append(el("div", { class: "chart-card" }, el("h3", {}, "Citizen Reality / Leader Impact / Green Energy"), el("canvas", { id: "c-cmp-bars" })));
+  panel.append(el("div", { class: "chart-card" }, el("h3", {}, "Category scores"), el("canvas", { id: "c-cmp-radar" })));
+
+  setTimeout(() => {
+    drawChart("c-cmp-bars", "bar", {
+      labels: admins.map((a) => a.administration.leader_name),
+      datasets: [
+        { label: "Citizen Reality", data: admins.map((a) => a.citizen_reality_score.score), backgroundColor: "#4f9cf9" },
+        { label: "Leader Impact", data: admins.map((a) => a.leader_impact_score.value), backgroundColor: "#a371f7" },
+        { label: "Green Energy", data: admins.map((a) => a.green_energy_index.score), backgroundColor: "#3fb950" },
+      ],
+    }, { scales: { y: { grid: { color: "#2d3a48" }, ticks: { color: "#8b98a8" } }, x: { ticks: { color: "#e6edf3" } } }, plugins: { legend: { labels: { color: "#e6edf3" } } } });
+    drawChart("c-cmp-radar", "radar", {
+      labels: PERF_CATS,
+      datasets: admins.map((a, i) => ({
+        label: a.administration.leader_name,
+        data: PERF_CATS.map((c) => (a.category_scores[c] ? a.category_scores[c].score : 0)),
+        borderColor: palette[i % palette.length], backgroundColor: palette[i % palette.length] + "22",
+      })),
+    }, { scales: { r: { min: 0, max: 100, grid: { color: "#2d3a48" }, angleLines: { color: "#2d3a48" }, pointLabels: { color: "#e6edf3", font: { size: 10 } }, ticks: { color: "#8b98a8", backdropColor: "transparent" } } }, plugins: { legend: { labels: { color: "#e6edf3" } } } });
+  }, 50);
+
+  $("#drawer").classList.add("show");
+  $("#overlay").classList.add("show");
+}
+
+const round1 = (x) => Math.round(x * 10) / 10;
+const fmt = (x) => (x == null ? "—" : x);
 
 init();

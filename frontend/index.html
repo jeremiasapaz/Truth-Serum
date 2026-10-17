@@ -19,6 +19,7 @@
     <nav class="tabs">
       <button class="tab active" data-view="dashboard">Dashboard</button>
       <button class="tab" data-view="compare">Compare</button>
+      <button class="tab" data-view="country">Country Impact</button>
       <button class="tab" data-view="methodology">Methodology</button>
     </nav>
     <div class="llm-badge" id="llm-badge" title="LLM scoring status">…</div>
@@ -59,6 +60,18 @@
           <canvas id="chart-trend"></canvas>
         </div>
       </div>
+    </section>
+
+    <!-- Country Impact -->
+    <section id="view-country" class="view">
+      <div class="compare-bar">
+        <h2>Country Performance &amp; Administration Impact <span class="muted">(World Bank Open Data)</span></h2>
+        <div class="list-actions" style="margin-top:12px">
+          <select id="country-filter"></select>
+          <select id="country-sort"></select>
+        </div>
+      </div>
+      <div id="country-grid" class="leader-grid" style="padding:20px 24px"></div>
     </section>
 
     <!-- Methodology -->
