@@ -15,9 +15,9 @@ Final confidence is composed of:
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Iterable
+from datetime import UTC, datetime
 
 from .constants import (
     CONTROVERSIAL_CATEGORIES,
@@ -59,8 +59,8 @@ def _recency_factor(published_at: datetime | None, half_life_days: float = 1825.
     if published_at is None:
         return 0.5
     if published_at.tzinfo is None:
-        published_at = published_at.replace(tzinfo=timezone.utc)
-    age_days = (datetime.now(timezone.utc) - published_at).days
+        published_at = published_at.replace(tzinfo=UTC)
+    age_days = (datetime.now(UTC) - published_at).days
     age_days = max(age_days, 0)
     return math.exp(-math.log(2) * age_days / half_life_days)
 

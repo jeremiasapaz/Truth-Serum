@@ -13,7 +13,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from . import models
-from .constants import SOURCE_RATINGS, DEFAULT_SOURCE_RATING, CATEGORIES
+from .constants import CATEGORIES, DEFAULT_SOURCE_RATING, SOURCE_RATINGS
 from .scoring import EvidenceInput, compute_score
 
 

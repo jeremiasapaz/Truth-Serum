@@ -1,0 +1,10 @@
+line-length = 100
+
+[lint]
+select = ["E", "F", "I", "UP", "B"]
+# B008: FastAPI relies on calling Depends()/Query() in argument defaults.
+# E501: long lines are acceptable here.
+ignore = ["B008", "E501"]
+
+[lint.per-file-ignores]
+"tests/*" = ["B"]

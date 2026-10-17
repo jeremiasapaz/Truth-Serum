@@ -22,18 +22,18 @@ def compare(
         raise HTTPException(status_code=404, detail="No leaders found")
 
     order = {lid: i for i, lid in enumerate(ids)}
-    leaders.sort(key=lambda l: order.get(l.id, 99))
+    leaders.sort(key=lambda ld: order.get(ld.id, 99))
 
     out = []
-    for l in leaders:
-        agg = leader_aggregates(l)
-        score_map = {s.category: s for s in l.scores}
+    for ld in leaders:
+        agg = leader_aggregates(ld)
+        score_map = {s.category: s for s in ld.scores}
         out.append(
             {
-                "id": l.id,
-                "name": l.name,
-                "country": l.country,
-                "political_affiliation": l.political_affiliation,
+                "id": ld.id,
+                "name": ld.name,
+                "country": ld.country,
+                "political_affiliation": ld.political_affiliation,
                 "total_score": agg["total_score"],
                 "avg_confidence": agg["avg_confidence"],
                 "categories": {

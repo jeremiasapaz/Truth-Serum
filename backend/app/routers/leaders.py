@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -80,8 +79,8 @@ def list_leaders(
         )
 
     leaders = q.all()
-    summaries = [_summary(l) for l in leaders]
-    lookup = {l.id: l for l in leaders}
+    summaries = [_summary(ld) for ld in leaders]
+    lookup = {ld.id: ld for ld in leaders}
 
     # Range filters operate on computed aggregates.
     if score_min is not None:
@@ -135,7 +134,7 @@ def _apply_sort(summaries, lookup, sort):
         sort = "total_score_desc"
 
     def key(s):
-        l = lookup[s.id]
+        ld = lookup[s.id]
         return {
             "name": s.name.lower(),
             "total_score_desc": -s.total_score,
@@ -143,16 +142,16 @@ def _apply_sort(summaries, lookup, sort):
             "confidence_desc": -s.avg_confidence,
             "confidence_asc": s.avg_confidence,
             "most_evidence": -s.evidence_total,
-            "most_scandals": -_count_scandals(l),
-            "most_investigated": -_count_investigations(l),
-            "most_controversial": -_count_negative(l),
-            "most_court_documents": -_count_court_docs(l),
-            "highest_corruption": _cat_score(l, "Corruption"),
-            "lowest_corruption": -_cat_score(l, "Corruption"),
-            "highest_environmental": -_cat_score(l, "Environmental Crime"),
-            "lowest_environmental": _cat_score(l, "Environmental Crime"),
-            "most_human_rights": _cat_score(l, "Human Rights"),
-            "most_democratic_integrity": -_cat_score(l, "Democratic Integrity"),
+            "most_scandals": -_count_scandals(ld),
+            "most_investigated": -_count_investigations(ld),
+            "most_controversial": -_count_negative(ld),
+            "most_court_documents": -_count_court_docs(ld),
+            "highest_corruption": _cat_score(ld, "Corruption"),
+            "lowest_corruption": -_cat_score(ld, "Corruption"),
+            "highest_environmental": -_cat_score(ld, "Environmental Crime"),
+            "lowest_environmental": _cat_score(ld, "Environmental Crime"),
+            "most_human_rights": _cat_score(ld, "Human Rights"),
+            "most_democratic_integrity": -_cat_score(ld, "Democratic Integrity"),
         }[sort]
 
     summaries.sort(key=key)
