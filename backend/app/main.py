@@ -11,7 +11,7 @@ from .routers import compare, evidence, ingest, leaders, scoring
 from .seed import seed_if_empty
 
 app = FastAPI(
-    title="Leader Transparency Scoring Platform",
+    title="Truth Serum",
     description=(
         "Evaluates documented public evidence and source weighting to assign "
         "transparency scores. Does not determine legal guilt."
