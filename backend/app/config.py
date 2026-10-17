@@ -12,6 +12,16 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./transparency.db"
 
+    # Set to false on networks with a TLS-intercepting proxy (self-signed CA).
+    verify_ssl: bool = True
+
+    # Optional news API keys for the (pluggable) news collectors.
+    gnews_api_key: str = ""
+    newsapi_key: str = ""
+
+    # Default lookback window for collectors that support it.
+    ingest_timespan: str = "12m"
+
     @property
     def llm_enabled(self) -> bool:
         return bool(self.llm_api_key.strip())

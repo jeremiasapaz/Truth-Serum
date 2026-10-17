@@ -108,7 +108,7 @@ async def score_with_llm(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=45.0) as client:
+        async with httpx.AsyncClient(timeout=45.0, verify=settings.verify_ssl) as client:
             resp = await client.post(
                 f"{settings.llm_base_url.rstrip('/')}/chat/completions",
                 json=payload,
