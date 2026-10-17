@@ -1,0 +1,17 @@
+{
+  "include": [
+    "backend/app",
+    "backend/tests"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.git",
+    "**/.venv",
+    "backend/venv",
+    "**/*.db"
+  ],
+  "venvPath": "backend",
+  "venv": "venv",
+  "reportMissingImports": "warning"
+}
