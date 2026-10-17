@@ -65,13 +65,20 @@
     <!-- Country Impact -->
     <section id="view-country" class="view">
       <div class="compare-bar">
-        <h2>Country Performance &amp; Administration Impact <span class="muted">(World Bank Open Data)</span></h2>
-        <div class="list-actions" style="margin-top:12px">
+        <h2>Country Performance &amp; Administration Impact <span class="muted">(World Bank + Our World in Data)</span></h2>
+        <div class="subtabs" id="country-subtabs">
+          <button class="subtab active" data-sub="admins">Administrations</button>
+          <button class="subtab" data-sub="heatmap">Heatmap</button>
+          <button class="subtab" data-sub="green">Green Energy</button>
+          <button class="subtab" data-sub="reality">Citizen Reality</button>
+        </div>
+        <div class="list-actions" id="country-controls" style="margin-top:12px">
           <select id="country-filter"></select>
           <select id="country-sort"></select>
         </div>
       </div>
       <div id="country-grid" class="leader-grid" style="padding:20px 24px"></div>
+      <div id="country-dash" style="padding:20px 24px; display:none"></div>
     </section>
 
     <!-- Methodology -->

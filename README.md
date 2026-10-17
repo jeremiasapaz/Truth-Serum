@@ -112,11 +112,14 @@ Note on networks: GDELT/TV APIs are blocked on some corporate networks; set
 ## Country Performance & Administration Impact Engine
 
 Measures whether a country's objective conditions improved, worsened, or stayed
-stable across an administration's lifecycle. Backbone data source: **World Bank
-Open Data API** (free, no key, full historical series) — every stored value keeps
-its dataset name + source URL, so no score exists without traceable data.
-Metrics without a free API (PISA, EIU Democracy Index, RSF Press Freedom, World
-Happiness, housing/energy-capacity series) are catalogued and marked *pluggable*.
+stable across an administration's lifecycle. Backbone data sources: **World Bank
+Open Data** + **Our World in Data** (both free, no key, full historical series) —
+every stored value keeps its dataset name + source URL, so no score exists
+without traceable data. OWID adds V-Dem electoral democracy, life
+satisfaction/wellbeing, and solar/hydro/EV series. Remaining metrics (PISA, RSF
+Press Freedom, housing prices, wind/battery capacity) are catalogued as
+*pluggable*. The **Country Impact** tab has sub-dashboards: Administrations,
+Heatmap, Green Energy, and Citizen Reality.
 
 **Periods per administration:** baseline (3y before), campaign, time in office,
 transition (1y after), successor (first 2y).
@@ -139,6 +142,7 @@ historical range, direction-adjusted):
 |--------|------|---------|
 | GET | `/api/country/administrations` | List + filter + sort (best economy, most improved, …) |
 | GET | `/api/country/administration/{id}` | Full period analysis + all scores + indicators |
+| GET | `/api/country/administration/{id}/benchmark` | Admin vs country-historical vs regional average |
 | GET | `/api/country/administration/{id}/summary` | AI/templated administration summary |
 | GET | `/api/country/administration/{id}/export.csv` | Downloadable source data |
 | GET | `/api/country/compare?ids=1&ids=2` | Compare administrations (Lula vs Bolsonaro, …) |

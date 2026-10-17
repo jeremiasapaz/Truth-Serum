@@ -483,11 +483,27 @@ async function renderMethodology() {
 }
 
 // ====================== Country Impact ======================
-const countryState = { selected: new Set(), initialized: false };
+const countryState = { selected: new Set(), initialized: false, sub: "admins" };
 const PERF_CATS = ["Security", "Education", "Health", "Economy", "Democracy", "Environment"];
+
+function setupCountrySubtabs() {
+  $$("#country-subtabs .subtab").forEach((b) =>
+    b.addEventListener("click", () => {
+      $$("#country-subtabs .subtab").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+      countryState.sub = b.dataset.sub;
+      const isList = b.dataset.sub === "admins";
+      $("#country-grid").style.display = isList ? "grid" : "none";
+      $("#country-dash").style.display = isList ? "none" : "block";
+      $("#country-controls").style.display = isList ? "flex" : "none";
+      if (isList) loadAdministrations();
+      else renderDashboard(b.dataset.sub);
+    }));
+}
 
 async function renderCountryTab() {
   if (!countryState.initialized) {
+    setupCountrySubtabs();
     const opts = await api("/api/country/filters/options");
     const cf = $("#country-filter");
     cf.append(el("option", { value: "" }, "All countries"));
@@ -695,6 +711,73 @@ async function openAdminCompare() {
 
   $("#drawer").classList.add("show");
   $("#overlay").classList.add("show");
+}
+
+async function renderDashboard(which) {
+  const admins = (await api("/api/country/administrations?sort=name")).filter((a) => a.has_data);
+  const dash = $("#country-dash");
+  dash.innerHTML = "";
+  if (!admins.length) { dash.append(el("div", { class: "empty" }, "No administrations with data yet. Ingest data on the Administrations tab.")); return; }
+
+  if (which === "heatmap") {
+    dash.append(el("div", { class: "dash-card" },
+      el("h3", {}, "Category scores across administrations"),
+      buildHeatmap(admins)));
+  } else if (which === "green") {
+    dash.append(el("div", { class: "dash-card" }, el("h3", {}, "Green Energy Index by administration"), el("canvas", { id: "d-green" })));
+    dash.append(el("div", { class: "dash-card" }, el("h3", {}, "Citizen Reality vs Green Energy"), el("canvas", { id: "d-green-scatter" })));
+    setTimeout(() => {
+      const withGei = admins.filter((a) => a.green_energy_index != null);
+      drawChart("d-green", "bar", {
+        labels: withGei.map((a) => a.leader_name),
+        datasets: [{ label: "Green Energy Index", data: withGei.map((a) => a.green_energy_index), backgroundColor: "#3fb950" }],
+      }, barOpts(0, 100));
+      drawChart("d-green-scatter", "bar", {
+        labels: withGei.map((a) => a.leader_name),
+        datasets: [
+          { label: "Green Energy", data: withGei.map((a) => a.green_energy_index), backgroundColor: "#3fb950" },
+          { label: "Citizen Reality", data: withGei.map((a) => a.citizen_reality_score), backgroundColor: "#4f9cf9" },
+        ],
+      }, barOpts(0, 100));
+    }, 50);
+  } else if (which === "reality") {
+    dash.append(el("div", { class: "dash-card" }, el("h3", {}, "Citizen Reality Score by administration"), el("canvas", { id: "d-crs" })));
+    dash.append(el("div", { class: "dash-card" }, el("h3", {}, "Leader Impact Score (−100..+100)"), el("canvas", { id: "d-lis" })));
+    setTimeout(() => {
+      const crs = admins.filter((a) => a.citizen_reality_score != null).sort((a, b) => b.citizen_reality_score - a.citizen_reality_score);
+      drawChart("d-crs", "bar", {
+        labels: crs.map((a) => a.leader_name),
+        datasets: [{ label: "Citizen Reality Score", data: crs.map((a) => a.citizen_reality_score), backgroundColor: crs.map((a) => a.citizen_reality_score >= 60 ? "#3fb950" : a.citizen_reality_score >= 40 ? "#d29922" : "#f85149") }],
+      }, barOpts(0, 100));
+      const lis = admins.filter((a) => a.leader_impact_score != null).sort((a, b) => b.leader_impact_score - a.leader_impact_score);
+      drawChart("d-lis", "bar", {
+        labels: lis.map((a) => a.leader_name),
+        datasets: [{ label: "Leader Impact Score", data: lis.map((a) => a.leader_impact_score), backgroundColor: lis.map((a) => totalColor(a.leader_impact_score)) }],
+      }, barOpts(-100, 100));
+    }, 50);
+  }
+}
+
+function barOpts(min, max) {
+  return { scales: { y: { min, max, grid: { color: "#2d3a48" }, ticks: { color: "#8b98a8" } }, x: { ticks: { color: "#e6edf3", font: { size: 10 } } } }, plugins: { legend: { labels: { color: "#e6edf3" } } } };
+}
+
+function buildHeatmap(admins) {
+  const table = el("table", { class: "hm-table" });
+  const head = el("tr", {}, el("th", { class: "rowh" }, "Administration"));
+  PERF_CATS.forEach((c) => head.append(el("th", {}, c)));
+  table.append(head);
+  admins.forEach((a) => {
+    const row = el("tr", {}, el("td", { class: "rowh" }, `${a.leader_name} (${a.country})`));
+    PERF_CATS.forEach((c) => {
+      const s = a.category_scores[c];
+      if (s == null) { row.append(el("td", {}, "—")); return; }
+      const col = s >= 66 ? "#3fb950" : s >= 40 ? "#d29922" : "#f85149";
+      row.append(el("td", { class: "hm-cell", style: `background:${col};opacity:${0.35 + 0.0065 * s}`, title: `${c}: ${s}` }, "" + Math.round(s)));
+    });
+    table.append(row);
+  });
+  return el("div", { style: "overflow-x:auto" }, table);
 }
 
 const round1 = (x) => Math.round(x * 10) / 10;
