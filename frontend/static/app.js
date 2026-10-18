@@ -741,11 +741,14 @@ async function openAdministration(id) {
   const tbl = el("table", { class: "ind-table" },
     el("tr", {}, el("th", {}, "Indicator"), el("th", {}, "Baseline"), el("th", {}, "Admin"), el("th", {}, "Δ"), el("th", {}, "Source")));
   d.indicators.forEach((i) => {
+    // Color based on metric direction: for lower_better, a positive delta is bad (red)
+    const isGood = i.direction === "higher_better" ? (i.delta || 0) >= 0 : (i.delta || 0) < 0;
+    const color = i.delta == null ? "#8b98a8" : (isGood ? "var(--pos)" : "var(--neg)");
     tbl.append(el("tr", {},
       el("td", {}, i.name + ` (${i.unit})`),
       el("td", {}, fmt(i.baseline_mean)),
       el("td", {}, fmt(i.admin_mean)),
-      el("td", { style: `color:${(i.delta || 0) >= 0 ? "var(--pos)" : "var(--neg)"}` }, i.delta == null ? "—" : (i.delta > 0 ? "+" : "") + i.delta),
+      el("td", { style: `color:${color}` }, i.delta == null ? "—" : (i.delta > 0 ? "+" : "") + i.delta),
       el("td", {}, i.source_url ? el("a", { href: i.source_url, target: "_blank", style: "color:var(--accent)" }, i.source_name) : i.source_name)));
   });
   panel.append(el("div", { style: "overflow-x:auto" }, tbl));

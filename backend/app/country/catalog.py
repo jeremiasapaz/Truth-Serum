@@ -160,6 +160,20 @@ INDICATORS: list[Indicator] = [
 ]
 
 # ---------------------------------------------------------------------------
+# Validation: ensure all indicators have explicit direction rules
+# ---------------------------------------------------------------------------
+def _validate_indicators() -> None:
+    """Validate all indicators have explicit direction rules at import time."""
+    for i in INDICATORS:
+        if i.direction not in ("higher_better", "lower_better"):
+            raise ValueError(
+                f"Indicator {i.code} ({i.name}) has invalid direction: {i.direction}. "
+                "Must be 'higher_better' or 'lower_better'."
+            )
+
+_validate_indicators()
+
+# ---------------------------------------------------------------------------
 # Composite definitions
 # ---------------------------------------------------------------------------
 PERFORMANCE_CATEGORIES = ["Security", "Education", "Health", "Economy", "Democracy", "Environment"]
