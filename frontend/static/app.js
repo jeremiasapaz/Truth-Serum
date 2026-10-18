@@ -792,9 +792,9 @@ async function openAdminCompare() {
     drawChart("c-cmp-bars", "bar", {
       labels: admins.map((a) => a.administration.leader_name),
       datasets: [
-        { label: "Citizen Reality", data: admins.map((a) => typeof a.citizen_reality_score === "object" ? a.citizen_reality_score.score : a.citizen_reality_score), backgroundColor: admins.map((a) => (typeof a.citizen_reality_score === "object" ? a.citizen_reality_score.delta : a.citizen_reality_delta) >= 0 ? "#3fb950" : "#f85149") },
-        { label: "Leader Impact", data: admins.map((a) => typeof a.leader_impact_score === "object" ? a.leader_impact_score.value : a.leader_impact_score), backgroundColor: admins.map((a) => totalColor(typeof a.leader_impact_score === "object" ? a.leader_impact_score.value : a.leader_impact_score)) },
-        { label: "Green Energy", data: admins.map((a) => typeof a.green_energy_index === "object" ? a.green_energy_index.score : a.green_energy_index), backgroundColor: admins.map((a) => (typeof a.green_energy_index === "object" ? a.green_energy_index.delta : a.green_energy_delta) >= 0 ? "#3fb950" : "#f85149") },
+        { label: "Citizen Reality", data: admins.map((a) => a.citizen_reality_score), backgroundColor: admins.map((a) => a.citizen_reality_delta >= 0 ? "#3fb950" : "#f85149") },
+        { label: "Leader Impact", data: admins.map((a) => a.leader_impact_score), backgroundColor: admins.map((a) => totalColor(a.leader_impact_score)) },
+        { label: "Green Energy", data: admins.map((a) => a.green_energy_index), backgroundColor: admins.map((a) => a.green_energy_delta >= 0 ? "#3fb950" : "#f85149") },
       ],
     }, { scales: { y: { grid: { color: "#2d3a48" }, ticks: { color: "#8b98a8" } }, x: { ticks: { color: "#e6edf3" } } }, plugins: { legend: { labels: { color: "#e6edf3" } } } });
     drawChart("c-cmp-radar", "radar", {
