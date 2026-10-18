@@ -621,19 +621,22 @@ async function loadAdministrations() {
 }
 
 function gauge(label, value, range, delta) {
-  const v = value == null ? "—" : value;
+  // Handle both number (list API) and object (detail API) formats
+  const numValue = typeof value === "object" ? value?.score : value;
+  const numDelta = typeof value === "object" ? value?.delta : delta;
+  const v = numValue == null ? "—" : numValue;
   let color;
   if (range === "lis") {
-    color = totalColor(value || 0);
-  } else if (delta != null) {
+    color = totalColor(numValue || 0);
+  } else if (numDelta != null) {
     // Color based on improvement (positive delta = green, negative = red)
-    color = delta >= 0 ? "var(--pos)" : "var(--neg)";
+    color = numDelta >= 0 ? "var(--pos)" : "var(--neg)";
   } else {
     // Fallback to absolute score coloring
-    color = value == null ? "#8b98a8" : value >= 60 ? "#3fb950" : value >= 40 ? "#d29922" : "#f85149";
+    color = numValue == null ? "#8b98a8" : numValue >= 60 ? "#3fb950" : numValue >= 40 ? "#d29922" : "#f85149";
   }
   return el("div", { class: "gauge" },
-    el("div", { class: "gauge-val", style: `color:${color}` }, v === "—" ? v : (range === "lis" && value > 0 ? "+" + v : "" + v)),
+    el("div", { class: "gauge-val", style: `color:${color}` }, v === "—" ? v : (range === "lis" && numValue > 0 ? "+" + numValue : "" + numValue)),
     el("div", { class: "muted" }, label));
 }
 
@@ -789,9 +792,9 @@ async function openAdminCompare() {
     drawChart("c-cmp-bars", "bar", {
       labels: admins.map((a) => a.administration.leader_name),
       datasets: [
-        { label: "Citizen Reality", data: admins.map((a) => a.citizen_reality_score), backgroundColor: admins.map((a) => a.citizen_reality_delta >= 0 ? "#3fb950" : "#f85149") },
-        { label: "Leader Impact", data: admins.map((a) => a.leader_impact_score), backgroundColor: admins.map((a) => totalColor(a.leader_impact_score)) },
-        { label: "Green Energy", data: admins.map((a) => a.green_energy_index), backgroundColor: admins.map((a) => a.green_energy_delta >= 0 ? "#3fb950" : "#f85149") },
+        { label: "Citizen Reality", data: admins.map((a) => typeof a.citizen_reality_score === "object" ? a.citizen_reality_score.score : a.citizen_reality_score), backgroundColor: admins.map((a) => (typeof a.citizen_reality_score === "object" ? a.citizen_reality_score.delta : a.citizen_reality_delta) >= 0 ? "#3fb950" : "#f85149") },
+        { label: "Leader Impact", data: admins.map((a) => typeof a.leader_impact_score === "object" ? a.leader_impact_score.value : a.leader_impact_score), backgroundColor: admins.map((a) => totalColor(typeof a.leader_impact_score === "object" ? a.leader_impact_score.value : a.leader_impact_score)) },
+        { label: "Green Energy", data: admins.map((a) => typeof a.green_energy_index === "object" ? a.green_energy_index.score : a.green_energy_index), backgroundColor: admins.map((a) => (typeof a.green_energy_index === "object" ? a.green_energy_index.delta : a.green_energy_delta) >= 0 ? "#3fb950" : "#f85149") },
       ],
     }, { scales: { y: { grid: { color: "#2d3a48" }, ticks: { color: "#8b98a8" } }, x: { ticks: { color: "#e6edf3" } } }, plugins: { legend: { labels: { color: "#e6edf3" } } } });
     drawChart("c-cmp-radar", "radar", {
