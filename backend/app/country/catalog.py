@@ -60,7 +60,7 @@ INDICATORS: list[Indicator] = [
     WB("VC.IHR.PSRC.P5", "Homicide rate (per 100k)", "Security", "per 100k", "lower_better"),
     PLUG("CRIME.VIOLENT", "Violent crime rate", "Security", "per 100k", "lower_better", "UNODC"),
     PLUG("CRIME.ORG", "Organized crime index", "Security", "index", "lower_better", "GI-TOC"),
-    PLUG("TERROR.INC", "Terrorism incidents", "Security", "count", "lower_better", "GTD"),
+    OWID("TERROR.INC", "Terrorism fatalities", "Security", "deaths", "lower_better", "terrorism-deaths"),
     PLUG("SAFETY.IDX", "Public safety index", "Security", "index", "higher_better", "Numbeo/GPI"),
 
     # EDUCATION
@@ -99,7 +99,8 @@ INDICATORS: list[Indicator] = [
          "liberal-democracy-index"),
     OWID("CPI.TI", "Corruption Perceptions Index (TI)", "Democracy", "0-100", "higher_better",
          "corruption-perception-index"),
-    PLUG("RSF.PRESS", "Press Freedom Index", "Democracy", "score", "higher_better", "RSF"),
+    OWID("RSF.PRESS", "Freedom of Expression (press proxy, V-Dem)", "Democracy", "0-1", "higher_better",
+         "freedom-of-expression-index"),
     PLUG("ELECT.INTEG", "Electoral integrity (PEI)", "Democracy", "index", "higher_better", "EIP"),
 
     # ENVIRONMENT
@@ -132,8 +133,9 @@ INDICATORS: list[Indicator] = [
     # PERSONAL WEALTH
     WB("NY.ADJ.NNTY.PC.KD", "Net national income per capita", "Personal Wealth", "USD", "higher_better"),
     WB("NE.CON.PRVT.PC.KD", "Household consumption per capita", "Personal Wealth", "USD", "higher_better"),
-    PLUG("MEDIAN.INCOME", "Median disposable income", "Personal Wealth", "USD", "higher_better", "OECD/LIS"),
-    PLUG("SAVINGS.RATE", "Household savings rate", "Personal Wealth", "%", "higher_better", "OECD"),
+    WB("NY.GNS.ICTR.ZS", "Gross savings (% GDP)", "Personal Wealth", "% GDP", "higher_better"),
+    OWID("MEDIAN.INCOME", "Median income (int-$/day)", "Personal Wealth", "int-$/day", "higher_better",
+         "daily-median-income"),
 
     # WELLBEING
     OWID("HAPPY.RANK", "Self-reported life satisfaction", "Wellbeing", "0-10", "higher_better",

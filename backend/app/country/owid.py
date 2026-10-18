@@ -24,7 +24,7 @@ class OWIDSeries:
 
 
 def fetch_series(iso3: str, slug: str, col_index: int = 3) -> OWIDSeries | None:
-    api_url = f"https://ourworldindata.org/grapher/{slug}.csv?country=~{iso3}"
+    api_url = f"https://ourworldindata.org/grapher/{slug}.csv"
     try:
         with http_client(timeout=25.0) as client:
             r = client.get(api_url)
@@ -59,6 +59,6 @@ def fetch_series(iso3: str, slug: str, col_index: int = 3) -> OWIDSeries | None:
         return None
     return OWIDSeries(
         slug=slug, indicator_name=value_name, source_name="Our World in Data",
-        source_url=f"https://ourworldindata.org/grapher/{slug}",
+        source_url=f"https://ourworldindata.org/grapher/{slug}?tab=table&stackMode=absolute&region=~{iso3}",
         api_url=api_url, values=values,
     )
