@@ -68,7 +68,8 @@ INDICATORS: list[Indicator] = [
     WB("SE.PRM.CMPT.ZS", "Primary completion rate", "Education", "%", "higher_better"),
     WB("SE.TER.ENRR", "Tertiary enrollment", "Education", "% gross", "higher_better"),
     WB("SE.XPD.TOTL.GD.ZS", "Education spending (% GDP)", "Education", "% GDP", "higher_better"),
-    PLUG("PISA.SCORE", "PISA score (mean)", "Education", "score", "higher_better", "OECD PISA"),
+    OWID("PISA.SCORE", "Harmonized test scores (PISA proxy)", "Education", "score", "higher_better",
+         "learning-outcomes-vs-gdp-per-capita"),
 
     # HEALTH
     WB("SP.DYN.LE00.IN", "Life expectancy", "Health", "years", "higher_better"),
@@ -94,6 +95,10 @@ INDICATORS: list[Indicator] = [
        dataset="World Bank Worldwide Governance Indicators"),
     OWID("VDEM.EDI", "Electoral Democracy Index (V-Dem)", "Democracy", "0-1", "higher_better",
          "electoral-democracy-index"),
+    OWID("VDEM.LDI", "Liberal Democracy Index (V-Dem)", "Democracy", "0-1", "higher_better",
+         "liberal-democracy-index"),
+    OWID("CPI.TI", "Corruption Perceptions Index (TI)", "Democracy", "0-100", "higher_better",
+         "corruption-perception-index"),
     PLUG("RSF.PRESS", "Press Freedom Index", "Democracy", "score", "higher_better", "RSF"),
     PLUG("ELECT.INTEG", "Electoral integrity (PEI)", "Democracy", "index", "higher_better", "EIP"),
 
@@ -142,7 +147,7 @@ INDICATORS: list[Indicator] = [
     WB("EN.GHG.CO2.PC.CE|GE", "CO2 per capita (trend)", "Green Energy", "t/capita", "lower_better"),
     OWID("SOLAR.CAP", "Solar energy consumption", "Green Energy", "TWh", "higher_better",
          "solar-energy-consumption"),
-    PLUG("WIND.CAP", "Wind capacity", "Green Energy", "MW", "higher_better", "IRENA"),
+    OWID("WIND.CAP", "Wind generation", "Green Energy", "TWh", "higher_better", "wind-generation"),
     OWID("HYDRO.GEN", "Hydropower consumption", "Green Energy", "TWh", "higher_better",
          "hydropower-consumption"),
     PLUG("BATTERY.CAP", "Battery storage capacity", "Green Energy", "MWh", "higher_better", "IEA"),
