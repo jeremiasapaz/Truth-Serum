@@ -620,10 +620,18 @@ async function loadAdministrations() {
   admins.forEach((a) => grid.append(adminCard(a)));
 }
 
-function gauge(label, value, range) {
+function gauge(label, value, range, delta) {
   const v = value == null ? "—" : value;
-  const color = range === "lis" ? totalColor(value || 0)
-    : value == null ? "#8b98a8" : value >= 60 ? "#3fb950" : value >= 40 ? "#d29922" : "#f85149";
+  let color;
+  if (range === "lis") {
+    color = totalColor(value || 0);
+  } else if (delta != null) {
+    // Color based on improvement (positive delta = green, negative = red)
+    color = delta >= 0 ? "var(--pos)" : "var(--neg)";
+  } else {
+    // Fallback to absolute score coloring
+    color = value == null ? "#8b98a8" : value >= 60 ? "#3fb950" : value >= 40 ? "#d29922" : "#f85149";
+  }
   return el("div", { class: "gauge" },
     el("div", { class: "gauge-val", style: `color:${color}` }, v === "—" ? v : (range === "lis" && value > 0 ? "+" + v : "" + v)),
     el("div", { class: "muted" }, label));
@@ -645,9 +653,9 @@ function adminCard(a) {
     card.append(b);
   } else {
     card.append(el("div", { class: "gauges" },
-      gauge("Citizen Reality", a.citizen_reality_score),
-      gauge("Leader Impact", a.leader_impact_score, "lis"),
-      gauge("Green Energy", a.green_energy_index)));
+      gauge("Citizen Reality", a.citizen_reality_score, null, a.citizen_reality_delta),
+      gauge("Leader Impact", a.leader_impact_score, "lis", null),
+      gauge("Green Energy", a.green_energy_index, null, a.green_energy_delta)));
     card.append(el("div", { class: "sub", style: "margin-top:8px" }, `Confidence ${a.confidence}% · ${a.coverage.available} indicators`));
   }
   card.onclick = () => openAdministration(a.id);
@@ -683,9 +691,9 @@ async function openAdministration(id) {
   }
 
   panel.append(el("div", { class: "gauges", style: "margin:16px 0" },
-    gauge("Citizen Reality", d.citizen_reality_score.score),
-    gauge("Leader Impact", d.leader_impact_score.value, "lis"),
-    gauge("Green Energy", d.green_energy_index.score),
+    gauge("Citizen Reality", d.citizen_reality_score, null, d.citizen_reality_delta),
+    gauge("Leader Impact", d.leader_impact_score, "lis", null),
+    gauge("Green Energy", d.green_energy_index, null, d.green_energy_delta),
     gauge("Confidence", d.confidence)));
 
   if (d.shocks_during_office.length)
@@ -781,9 +789,9 @@ async function openAdminCompare() {
     drawChart("c-cmp-bars", "bar", {
       labels: admins.map((a) => a.administration.leader_name),
       datasets: [
-        { label: "Citizen Reality", data: admins.map((a) => a.citizen_reality_score.score), backgroundColor: "#4f9cf9" },
-        { label: "Leader Impact", data: admins.map((a) => a.leader_impact_score.value), backgroundColor: "#a371f7" },
-        { label: "Green Energy", data: admins.map((a) => a.green_energy_index.score), backgroundColor: "#3fb950" },
+        { label: "Citizen Reality", data: admins.map((a) => a.citizen_reality_score), backgroundColor: admins.map((a) => a.citizen_reality_delta >= 0 ? "#3fb950" : "#f85149") },
+        { label: "Leader Impact", data: admins.map((a) => a.leader_impact_score), backgroundColor: admins.map((a) => totalColor(a.leader_impact_score)) },
+        { label: "Green Energy", data: admins.map((a) => a.green_energy_index), backgroundColor: admins.map((a) => a.green_energy_delta >= 0 ? "#3fb950" : "#f85149") },
       ],
     }, { scales: { y: { grid: { color: "#2d3a48" }, ticks: { color: "#8b98a8" } }, x: { ticks: { color: "#e6edf3" } } }, plugins: { legend: { labels: { color: "#e6edf3" } } } });
     drawChart("c-cmp-radar", "radar", {
@@ -817,13 +825,13 @@ async function renderDashboard(which) {
       const withGei = admins.filter((a) => a.green_energy_index != null);
       drawChart("d-green", "bar", {
         labels: withGei.map((a) => a.leader_name),
-        datasets: [{ label: "Green Energy Index", data: withGei.map((a) => a.green_energy_index), backgroundColor: "#3fb950" }],
+        datasets: [{ label: "Green Energy Index", data: withGei.map((a) => a.green_energy_index), backgroundColor: withGei.map((a) => a.green_energy_delta >= 0 ? "#3fb950" : "#f85149") }],
       }, barOpts(0, 100));
       drawChart("d-green-scatter", "bar", {
         labels: withGei.map((a) => a.leader_name),
         datasets: [
-          { label: "Green Energy", data: withGei.map((a) => a.green_energy_index), backgroundColor: "#3fb950" },
-          { label: "Citizen Reality", data: withGei.map((a) => a.citizen_reality_score), backgroundColor: "#4f9cf9" },
+          { label: "Green Energy", data: withGei.map((a) => a.green_energy_index), backgroundColor: withGei.map((a) => a.green_energy_delta >= 0 ? "#3fb950" : "#f85149") },
+          { label: "Citizen Reality", data: withGei.map((a) => a.citizen_reality_score), backgroundColor: withGei.map((a) => a.citizen_reality_delta >= 0 ? "#3fb950" : "#f85149") },
         ],
       }, barOpts(0, 100));
     }, 50);
@@ -834,7 +842,7 @@ async function renderDashboard(which) {
       const crs = admins.filter((a) => a.citizen_reality_score != null).sort((a, b) => b.citizen_reality_score - a.citizen_reality_score);
       drawChart("d-crs", "bar", {
         labels: crs.map((a) => a.leader_name),
-        datasets: [{ label: "Citizen Reality Score", data: crs.map((a) => a.citizen_reality_score), backgroundColor: crs.map((a) => a.citizen_reality_score >= 60 ? "#3fb950" : a.citizen_reality_score >= 40 ? "#d29922" : "#f85149") }],
+        datasets: [{ label: "Citizen Reality Score", data: crs.map((a) => a.citizen_reality_score), backgroundColor: crs.map((a) => a.citizen_reality_delta >= 0 ? "#3fb950" : "#f85149") }],
       }, barOpts(0, 100));
       const lis = admins.filter((a) => a.leader_impact_score != null).sort((a, b) => b.leader_impact_score - a.leader_impact_score);
       drawChart("d-lis", "bar", {

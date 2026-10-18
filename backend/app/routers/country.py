@@ -25,8 +25,10 @@ def _compact(analysis: dict) -> dict:
     return {
         **a,
         "citizen_reality_score": analysis["citizen_reality_score"]["score"],
+        "citizen_reality_delta": analysis["citizen_reality_score"].get("delta"),
         "leader_impact_score": analysis["leader_impact_score"]["value"],
         "green_energy_index": analysis["green_energy_index"]["score"],
+        "green_energy_delta": analysis["green_energy_index"].get("delta"),
         "confidence": analysis["confidence"],
         "coverage": analysis["coverage"],
         "category_scores": {c: v["score"] for c, v in analysis["category_scores"].items()},
