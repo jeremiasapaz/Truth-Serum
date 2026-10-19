@@ -55,13 +55,42 @@ def _format_evidence(evidence: Iterable[dict]) -> str:
     return "\n".join(lines)
 
 
+async def _call_llm(
+    *,
+    api_key: str,
+    base_url: str,
+    model: str,
+    messages: list[dict],
+    verify_ssl: bool,
+) -> dict:
+    """Make a single LLM API call."""
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.1,
+        "response_format": {"type": "json_object"},
+    }
+    async with httpx.AsyncClient(timeout=45.0, verify=verify_ssl) as client:
+        resp = await client.post(
+            f"{base_url.rstrip('/')}/chat/completions",
+            json=payload,
+            headers=headers,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
 async def score_with_llm(
     *,
     leader_name: str,
     category: str,
     evidence_dicts: list[dict],
 ) -> ScoreResult:
-    """Score using the LLM, falling back to the deterministic engine on any error."""
+    """Score using the LLM with automatic fallback to backup provider, then deterministic engine."""
     settings = get_settings()
 
     # Deterministic result is always computed: it is the audit baseline and the
@@ -93,50 +122,63 @@ async def score_with_llm(
         "Assign the transparency score for this category now."
     )
 
-    payload = {
-        "model": settings.llm_model,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.1,
-        "response_format": {"type": "json_object"},
-    }
-    headers = {
-        "Authorization": f"Bearer {settings.llm_api_key}",
-        "Content-Type": "application/json",
-    }
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt},
+    ]
 
+    # Try primary provider
     try:
-        async with httpx.AsyncClient(timeout=45.0, verify=settings.verify_ssl) as client:
-            resp = await client.post(
-                f"{settings.llm_base_url.rstrip('/')}/chat/completions",
-                json=payload,
-                headers=headers,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            content = data["choices"][0]["message"]["content"]
-            parsed = json.loads(content)
-
-        score = int(parsed["score"])
-        if score not in (-1, 0, 1):
-            raise ValueError(f"invalid score {score}")
-        confidence = float(parsed.get("confidence", det.confidence))
-        confidence = max(0.0, min(confidence, 100.0))
-        reason = str(parsed.get("reason", det.reason)).strip()
-
-        # Keep the deterministic component breakdown + counts for auditability,
-        # but use the LLM's score / confidence / reason.
-        return ScoreResult(
-            score=score,
-            confidence=round(confidence, 1),
-            evidence_count=det.evidence_count,
-            source_count=det.source_count,
-            source_quality=det.source_quality,
-            components={**det.components, "llm_model": settings.llm_model},
-            reason=reason,
+        data = await _call_llm(
+            api_key=settings.llm_api_key,
+            base_url=settings.llm_base_url,
+            model=settings.llm_model,
+            messages=messages,
+            verify_ssl=settings.verify_ssl,
         )
-    except Exception as exc:  # noqa: BLE001 - any failure -> safe fallback
-        det.reason = (det.reason or "") + f" [LLM scoring unavailable ({type(exc).__name__}); used deterministic engine.]"
-        return det
+        content = data["choices"][0]["message"]["content"]
+        parsed = json.loads(content)
+        provider_used = settings.llm_model
+    except Exception as primary_exc:
+        # Try backup provider if configured
+        if settings.llm_backup_enabled:
+            try:
+                data = await _call_llm(
+                    api_key=settings.llm_backup_key,
+                    base_url=settings.llm_backup_base_url,
+                    model=settings.llm_backup_model,
+                    messages=messages,
+                    verify_ssl=settings.verify_ssl,
+                )
+                content = data["choices"][0]["message"]["content"]
+                parsed = json.loads(content)
+                provider_used = settings.llm_backup_model
+            except Exception as backup_exc:
+                det.reason = (det.reason or "") + (
+                    f" [LLM scoring unavailable (primary: {type(primary_exc).__name__}, backup: {type(backup_exc).__name__}); used deterministic engine.]"
+                )
+                return det
+        else:
+            det.reason = (det.reason or "") + (
+                f" [LLM scoring unavailable ({type(primary_exc).__name__}); used deterministic engine.]"
+            )
+            return det
+
+    score = int(parsed["score"])
+    if score not in (-1, 0, 1):
+        raise ValueError(f"invalid score {score}")
+    confidence = float(parsed.get("confidence", det.confidence))
+    confidence = max(0.0, min(confidence, 100.0))
+    reason = str(parsed.get("reason", det.reason)).strip()
+
+    # Keep the deterministic component breakdown + counts for auditability,
+    # but use the LLM's score / confidence / reason.
+    return ScoreResult(
+        score=score,
+        confidence=round(confidence, 1),
+        evidence_count=det.evidence_count,
+        source_count=det.source_count,
+        source_quality=det.source_quality,
+        components={**det.components, "llm_model": provider_used},
+        reason=reason,
+    )

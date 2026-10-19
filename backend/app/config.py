@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     llm_base_url: str = "https://api.openai.com/v1"
     llm_model: str = "gpt-4o-mini"
 
+    # Backup LLM configuration (fallback if primary fails)
+    llm_backup_key: str = ""
+    llm_backup_base_url: str = ""
+    llm_backup_model: str = ""
+
     database_url: str = "sqlite:///./transparency.db"
 
     # Set to false on networks with a TLS-intercepting proxy (self-signed CA).
@@ -31,6 +36,10 @@ class Settings(BaseSettings):
     @property
     def llm_enabled(self) -> bool:
         return bool(self.llm_api_key.strip())
+
+    @property
+    def llm_backup_enabled(self) -> bool:
+        return bool(self.llm_backup_key.strip())
 
 
 @lru_cache
