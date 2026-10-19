@@ -23,6 +23,10 @@ ADMINISTRATIONS = [
          office="President", party="Workers' Party (PT)", region="South America",
          continent="South America", start_date="2023-01-01", end_date=None,
          predecessor_name="Jair Bolsonaro", successor_name=None),
+    dict(leader_name="Flávio Bolsonaro", country="Brazil", country_iso3="BRA",
+         office="Senator", party="Liberal Party (PL)", region="South America",
+         continent="South America", start_date="2019-02-01", end_date=None,
+         predecessor_name="Romário", successor_name=None),
     # United States
     dict(leader_name="Donald Trump", country="United States", country_iso3="USA",
          office="President", party="Republican Party", region="North America",
@@ -54,14 +58,20 @@ ADMINISTRATIONS = [
 
 
 def seed_administrations(db: Session) -> None:
-    if db.query(models.Administration).count() > 0:
-        return
     for a in ADMINISTRATIONS:
-        db.add(models.Administration(
-            leader_name=a["leader_name"], country=a["country"], country_iso3=a["country_iso3"],
-            office=a["office"], party=a["party"], region=a["region"], continent=a["continent"],
-            start_date=datetime.fromisoformat(a["start_date"]),
-            end_date=datetime.fromisoformat(a["end_date"]) if a["end_date"] else None,
-            predecessor_name=a["predecessor_name"], successor_name=a["successor_name"],
-        ))
+        # Check if this administration already exists
+        existing = db.query(models.Administration).filter(
+            models.Administration.leader_name == a["leader_name"],
+            models.Administration.country == a["country"],
+            models.Administration.start_date == datetime.fromisoformat(a["start_date"])
+        ).first()
+        
+        if not existing:
+            db.add(models.Administration(
+                leader_name=a["leader_name"], country=a["country"], country_iso3=a["country_iso3"],
+                office=a["office"], party=a["party"], region=a["region"], continent=a["continent"],
+                start_date=datetime.fromisoformat(a["start_date"]),
+                end_date=datetime.fromisoformat(a["end_date"]) if a["end_date"] else None,
+                predecessor_name=a["predecessor_name"], successor_name=a["successor_name"],
+            ))
     db.commit()
