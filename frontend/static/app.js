@@ -13,6 +13,100 @@ const CLASS_COLORS = {
   "DISPUTED CLAIM": "#f85149", "UNVERIFIED CLAIM": "#da3633",
 };
 
+// Translations for Brazilian Portuguese
+const TRANSLATIONS = {
+  en: {
+    title: "Truth Serum",
+    tagline: "Scores from documented evidence & source weighting — not legal guilt.",
+    dashboard: "Dashboard",
+    compare: "Compare",
+    country: "Country Impact",
+    sources: "Sources",
+    methodology: "Methodology",
+    leaders: "Leaders",
+    compareLeaders: "Compare Leaders",
+    compareSubtitle: "(up to 10)",
+    selectLeaders: "Select 2+ leaders to compare.",
+    radarScores: "Radar — category scores",
+    barTotal: "Bar — total score",
+    heatmapScores: "Heatmap — scores by category",
+    trendHistory: "Trend — score history",
+    countryTitle: "Country Performance & Administration Impact",
+    countrySubtitle: "(World Bank + Our World in Data)",
+    administrations: "Administrations",
+    heatmap: "Heatmap",
+    greenEnergy: "Green Energy",
+    citizenReality: "Citizen Reality",
+    keywordSearch: "Keyword search…",
+    confidence: "Confidence",
+    indicators: "indicators",
+    downloadCSV: "Download CSV",
+    indicator: "Indicator",
+    baseline: "Baseline",
+    admin: "Admin",
+    delta: "Δ",
+    source: "Source",
+    noData: "No data available",
+    ingestData: "Ingest World Bank data",
+    ingesting: "Ingesting…",
+    error: "Error — retry",
+    shockContext: "Global context during term:",
+    shockNote: ". Impact is estimated, not attributed as direct causation.",
+    llmStatus: "LLM scoring status",
+  },
+  pt: {
+    title: "Soro da Verdade",
+    tagline: "Pontuações baseadas em evidências documentadas e ponderação de fontes — não culpa legal.",
+    dashboard: "Painel",
+    compare: "Comparar",
+    country: "Impacto no País",
+    sources: "Fontes",
+    methodology: "Metodologia",
+    leaders: "Líderes",
+    compareLeaders: "Comparar Líderes",
+    compareSubtitle: "(até 10)",
+    selectLeaders: "Selecione 2+ líderes para comparar.",
+    radarScores: "Radar — pontuações por categoria",
+    barTotal: "Barra — pontuação total",
+    heatmapScores: "Mapa de calor — pontuações por categoria",
+    trendHistory: "Tendência — histórico de pontuações",
+    countryTitle: "Desempenho do País e Impacto da Administração",
+    countrySubtitle: "(Banco Mundial + Our World in Data)",
+    administrations: "Administrações",
+    heatmap: "Mapa de Calor",
+    greenEnergy: "Energia Verde",
+    citizenReality: "Realidade do Cidadão",
+    keywordSearch: "Busca por palavra-chave…",
+    confidence: "Confiança",
+    indicators: "indicadores",
+    downloadCSV: "Baixar CSV",
+    indicator: "Indicador",
+    baseline: "Linha de base",
+    admin: "Admin",
+    delta: "Δ",
+    source: "Fonte",
+    noData: "Dados não disponíveis",
+    ingestData: "Ingerir dados do Banco Mundial",
+    ingesting: "Ingerindo…",
+    error: "Erro — tentar novamente",
+    shockContext: "Contexto global durante o mandato:",
+    shockNote: ". O impacto é estimado, não atribuído como causalidade direta.",
+    llmStatus: "Status da pontuação por IA",
+  },
+};
+
+let currentLang = localStorage.getItem("lang") || "en";
+
+function t(key) {
+  return TRANSLATIONS[currentLang][key] || TRANSLATIONS.en[key] || key;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem("lang", lang);
+  location.reload();
+}
+
 const state = {
   options: null,
   leaders: [],
@@ -56,6 +150,23 @@ $$(".tab").forEach((t) =>
   })
 );
 
+// Language switcher
+$("#lang-switch").addEventListener("click", () => {
+  setLang(currentLang === "en" ? "pt" : "en");
+});
+
+// Apply translations on load
+function applyTranslations() {
+  document.title = t("title");
+  $(".brand h1").textContent = t("title");
+  $(".tagline").textContent = t("tagline");
+  $$(".tab").forEach((tab, i) => {
+    const keys = ["dashboard", "compare", "country", "sources", "methodology"];
+    if (keys[i]) tab.textContent = t(keys[i]);
+  });
+  $("#lang-switch").textContent = currentLang === "en" ? "🇧🇷 PT" : "🇺🇸 EN";
+}
+
 // ---------- init ----------
 async function init() {
   const health = await api("/api/health");
@@ -68,6 +179,9 @@ async function init() {
   buildFilters();
   buildSort();
   await loadLeaders();
+  
+  // Apply translations
+  applyTranslations();
 }
 
 // ---------- filters ----------
