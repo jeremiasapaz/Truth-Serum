@@ -237,6 +237,16 @@ function applyTranslations() {
     if (keys[i]) tab.textContent = t(keys[i]);
   });
   $("#lang-switch").textContent = currentLang === "en" ? "🇧🇷 PT" : "🇺🇸 EN";
+  
+  // Update dynamic elements
+  const leadersTitle = $("#leaders-title");
+  if (leadersTitle) {
+    const count = $("#result-count").textContent;
+    leadersTitle.textContent = `${t("leaders")} ${count}`;
+  }
+  
+  const keywordInput = $("#keyword");
+  if (keywordInput) keywordInput.placeholder = t("keywordSearch");
 }
 
 // ---------- init ----------
@@ -353,6 +363,7 @@ async function loadLeaders() {
   state.leaders = await api("/api/leaders?" + p.toString());
   $("#result-count").textContent = `(${state.leaders.length})`;
   renderGrid();
+  applyTranslations(); // Re-apply after data loads
 }
 
 function renderGrid() {
