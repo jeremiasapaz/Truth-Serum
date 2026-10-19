@@ -89,14 +89,40 @@ def _call_llm(messages: list[dict]) -> dict:
         "response_format": {"type": "json_object"},
     }
     headers = {"Authorization": f"Bearer {settings.llm_api_key}", "Content-Type": "application/json"}
-    with httpx.Client(timeout=60.0, verify=settings.verify_ssl) as client:
-        r = client.post(
-            f"{settings.llm_base_url.rstrip('/')}/chat/completions",
-            json=payload, headers=headers,
-        )
-        r.raise_for_status()
-        content = r.json()["choices"][0]["message"]["content"]
-    return json.loads(content)
+    
+    # Try primary provider
+    try:
+        with httpx.Client(timeout=60.0, verify=settings.verify_ssl) as client:
+            r = client.post(
+                f"{settings.llm_base_url.rstrip('/')}/chat/completions",
+                json=payload, headers=headers,
+            )
+            r.raise_for_status()
+            content = r.json()["choices"][0]["message"]["content"]
+        return json.loads(content)
+    except Exception as primary_exc:
+        # Try backup provider if configured
+        if settings.llm_backup_enabled:
+            try:
+                backup_payload = {
+                    "model": settings.llm_backup_model,
+                    "messages": messages,
+                    "temperature": 0.0,
+                    "response_format": {"type": "json_object"},
+                }
+                backup_headers = {"Authorization": f"Bearer {settings.llm_backup_key}", "Content-Type": "application/json"}
+                with httpx.Client(timeout=60.0, verify=settings.verify_ssl) as client:
+                    r = client.post(
+                        f"{settings.llm_backup_base_url.rstrip('/')}/chat/completions",
+                        json=backup_payload, headers=backup_headers,
+                    )
+                    r.raise_for_status()
+                    content = r.json()["choices"][0]["message"]["content"]
+                return json.loads(content)
+            except Exception as backup_exc:
+                raise Exception(f"Primary LLM failed ({type(primary_exc).__name__}), backup LLM failed ({type(backup_exc).__name__})") from backup_exc
+        else:
+            raise
 
 
 BATCH_SYSTEM_PROMPT = f"""You triage short news items for transparency evidence about a leader.
