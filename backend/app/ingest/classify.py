@@ -99,7 +99,11 @@ def _call_llm(messages: list[dict]) -> dict:
             )
             r.raise_for_status()
             content = r.json()["choices"][0]["message"]["content"]
-        return json.loads(content)
+        result = json.loads(content)
+        # Ensure result is a dict
+        if isinstance(result, list):
+            result = {"items": result}
+        return result
     except Exception as primary_exc:
         # Try backup provider if configured
         if settings.llm_backup_enabled:
@@ -118,7 +122,11 @@ def _call_llm(messages: list[dict]) -> dict:
                     )
                     r.raise_for_status()
                     content = r.json()["choices"][0]["message"]["content"]
-                return json.loads(content)
+                result = json.loads(content)
+                # Ensure result is a dict
+                if isinstance(result, list):
+                    result = {"items": result}
+                return result
             except Exception as backup_exc:
                 raise Exception(f"Primary LLM failed ({type(primary_exc).__name__}), backup LLM failed ({type(backup_exc).__name__})") from backup_exc
         else:
