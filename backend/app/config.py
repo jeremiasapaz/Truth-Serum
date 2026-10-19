@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     def llm_backup_enabled(self) -> bool:
         return bool(self.llm_backup_key.strip())
 
+    @property
+    def is_postgresql(self) -> bool:
+        return self.database_url.startswith("postgresql://")
+
 
 @lru_cache
 def get_settings() -> Settings:
