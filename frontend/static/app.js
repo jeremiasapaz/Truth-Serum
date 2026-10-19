@@ -625,6 +625,7 @@ function gauge(label, value, range, delta) {
   const numValue = typeof value === "object" ? value?.score : value;
   const numDelta = typeof value === "object" ? value?.delta : delta;
   const v = numValue == null ? "—" : numValue;
+  console.log(`gauge: ${label}, value=${numValue}, delta=${numDelta}, range=${range}`);
   let color;
   if (range === "lis") {
     color = totalColor(numValue || 0);
@@ -635,6 +636,7 @@ function gauge(label, value, range, delta) {
     // Fallback to absolute score coloring
     color = numValue == null ? "#8b98a8" : numValue >= 60 ? "#3fb950" : numValue >= 40 ? "#d29922" : "#f85149";
   }
+  console.log(`gauge color: ${color}`);
   return el("div", { class: "gauge" },
     el("div", { class: "gauge-val", style: `color:${color}` }, v === "—" ? v : (range === "lis" && numValue > 0 ? "+" + numValue : "" + numValue)),
     el("div", { class: "muted" }, label));
