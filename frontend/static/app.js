@@ -426,10 +426,6 @@ async function openLeader(id) {
       el("div", { class: "muted" }, "Evidence"),
       el("div", { class: "big" }, detail.evidence_total))));
 
-  const rescoreBtn = el("button", { class: "btn", onclick: () => rescore(id, rescoreBtn) },
-    state.llm ? "Re-run AI scoring (LLM)" : "Re-run scoring (engine)");
-  panel.append(rescoreBtn);
-
   const cats = el("div", { style: "margin-top:16px" });
   detail.scores.sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category));
   detail.scores.forEach((s) => cats.append(categoryRow(s, byCat[s.category] || [])));

@@ -12,3 +12,29 @@ services:
         value: sqlite:///./transparency.db
       - key: VERIFY_SSL
         value: "false"
+  - type: cron
+    name: daily-update
+    env: python
+    plan: free
+    schedule: "0 13 * * *"  # 8 AM EST = 1 PM UTC (EST is UTC-5)
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && python -m app.cron.daily_update
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        value: sqlite:///./transparency.db
+      - key: VERIFY_SSL
+        value: "false"
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta/openai
+      - key: LLM_MODEL
+        value: gemini-3.8-flash
+      - key: LLM_BACKUP_KEY
+        sync: false
+      - key: LLM_BACKUP_BASE_URL
+        value: https://api.mistral.ai/v1
+      - key: LLM_BACKUP_MODEL
+        value: open-mistral-7b
