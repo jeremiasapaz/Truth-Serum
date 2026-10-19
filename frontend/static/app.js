@@ -429,6 +429,19 @@ async function openLeader(id) {
       el("div", { class: "muted" }, "Evidence"),
       el("div", { class: "big" }, detail.evidence_total))));
 
+  // Criminal Records section
+  const hasCriminalRecord = detail.name.includes("Lula") || detail.name.includes("Bolsonaro");
+  if (hasCriminalRecord) {
+    panel.append(el("div", { class: "criminal-records", style: "margin-top:16px;padding:12px;background:var(--panel-2);border:1px solid var(--warn);border-radius:8px" },
+      el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:8px" },
+        el("span", { style: "color:var(--warn);font-size:18px" }, "⚠"),
+        el("strong", { style: "color:var(--warn)" }, "Criminal Record")),
+      el("div", { class: "muted", style: "font-size:13px" },
+        detail.name.includes("Lula") 
+          ? "Arrested in 2018 on corruption charges (Operation Car Wash). Convicted and sentenced to 12 years, later overturned by Supreme Court."
+          : "Jair Bolsonaro: Multiple investigations for corruption, attacks on democracy, and spreading false information. Flávio Bolsonaro: Investigations for corruption and money laundering (crackhead scheme).")));
+  }
+
   const cats = el("div", { style: "margin-top:16px" });
   detail.scores.sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category));
   detail.scores.forEach((s) => cats.append(categoryRow(s, byCat[s.category] || [])));
