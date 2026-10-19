@@ -154,6 +154,51 @@ class IndicatorValue(Base):
 
 
 # ===========================================================================
+# Financial Transparency
+# ===========================================================================
+class FinancialData(Base):
+    """Financial data for leaders: salary, assets, wealth, income sources."""
+
+    __tablename__ = "financial_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+    leader_id = Column(Integer, ForeignKey("leaders.id"), nullable=False)
+    
+    # Salary and public income
+    annual_salary = Column(Float, nullable=True)  # Annual salary in USD
+    public_benefits = Column(Float, nullable=True)  # Benefits, allowances, etc.
+    year = Column(Integer, index=True, nullable=True)  # Year of data
+    
+    # Assets and wealth
+    total_assets = Column(Float, nullable=True)  # Total assets in USD
+    real_estate = Column(Float, nullable=True)  # Real estate value
+    investments = Column(Float, nullable=True)  # Investment portfolio
+    cash = Column(Float, nullable=True)  # Cash and bank accounts
+    other_assets = Column(Float, nullable=True)  # Other assets
+    
+    # Debt
+    total_debt = Column(Float, nullable=True)  # Total debt/liabilities
+    net_worth = Column(Float, nullable=True)  # Net worth (assets - debt)
+    
+    # Income sources breakdown
+    public_income = Column(Float, nullable=True)  # Income from public office
+    private_income = Column(Float, nullable=True)  # Income from private sources
+    investment_income = Column(Float, nullable=True)  # Income from investments
+    other_income = Column(Float, nullable=True)  # Other income sources
+    
+    # Verification
+    source = Column(String, nullable=True)  # Source of financial data
+    source_url = Column(String, nullable=True)
+    verified = Column(Integer, default=0)  # 0 = unverified, 1 = verified
+    notes = Column(Text, nullable=True)  # Additional context
+    
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    leader = relationship("Leader")
+
+
+# ===========================================================================
 # Speech Transcripts
 # ===========================================================================
 class SpeechTranscript(Base):

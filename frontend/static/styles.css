@@ -67,6 +67,12 @@ h1, h2, h3 { margin: 0; }
 }
 .lc-actions { display: flex; gap: 8px; margin-top: 12px; }
 
+/* Financial data */
+.stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-row .label { color: var(--muted); }
+.stat-row .value { font-weight: 600; }
+
 /* Views */
 .view { display: none; }
 .view.active { display: block; }

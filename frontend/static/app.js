@@ -21,6 +21,7 @@ const TRANSLATIONS = {
     dashboard: "Dashboard",
     compare: "Compare",
     country: "Public Impact",
+    financial: "Financial Transparency",
     transcripts: "Speech Transcripts",
     sources: "Sources",
     methodology: "Methodology",
@@ -97,6 +98,7 @@ const TRANSLATIONS = {
     dashboard: "Painel",
     compare: "Comparar",
     country: "Impacto Público",
+    financial: "Transparência Financeira",
     transcripts: "Transcrições de Discursos",
     sources: "Fontes",
     methodology: "Metodologia",
@@ -221,6 +223,7 @@ $$(".tab").forEach((t) =>
     if (t.dataset.view === "methodology") renderMethodology();
     if (t.dataset.view === "country") renderCountryTab();
     if (t.dataset.view === "transcripts") renderTranscripts();
+    if (t.dataset.view === "financial") renderFinancial();
     if (t.dataset.view === "sources") renderSources();
   })
 );
@@ -236,7 +239,7 @@ function applyTranslations() {
   $(".brand h1").textContent = t("title");
   $(".tagline").textContent = t("tagline");
   $$(".tab").forEach((tab, i) => {
-    const keys = ["dashboard", "compare", "country", "transcripts", "sources", "methodology"];
+    const keys = ["dashboard", "compare", "country", "financial", "transcripts", "sources", "methodology"];
     if (keys[i]) tab.textContent = t(keys[i]);
   });
   $("#lang-switch").textContent = currentLang === "en" ? "🇧🇷 PT" : "🇺🇸 EN";
@@ -808,6 +811,59 @@ $("#add-transcript-btn").addEventListener("click", () => {
   // TODO: Implement submission form
   alert("Manual transcript submission coming soon!");
 });
+
+// ====================== Financial Transparency ======================
+async function renderFinancial() {
+  const root = $("#financial-grid");
+  root.innerHTML = "";
+  
+  try {
+    const financialData = await api("/api/financial");
+    
+    if (financialData.length === 0) {
+      root.append(el("div", { class: "empty" },
+        el("h3", {}, "No financial data yet"),
+        el("p", { class: "muted" }, "Financial transparency data coming soon. This will show salary, assets, and wealth vs. legitimate income.")));
+      return;
+    }
+    
+    // Group by leader
+    const byLeader = {};
+    financialData.forEach((d) => {
+      if (!byLeader[d.leader_id]) byLeader[d.leader_id] = [];
+      byLeader[d.leader_id].push(d);
+    });
+    
+    Object.entries(byLeader).forEach(([leaderId, data]) => {
+      const latest = data[0]; // Most recent year
+      const card = el("div", { class: "leader-card" },
+        el("div", { class: "lc-head" },
+          el("h3", {}, latest.leader_name),
+          el("div", { class: "sub" }, `Year: ${latest.year}`)),
+        el("div", { class: "lc-body" },
+          el("div", { class: "stat-row" },
+            el("span", { class: "label" }, "Annual Salary:"),
+            el("span", { class: "value" }, latest.annual_salary ? `$${latest.annual_salary.toLocaleString()}` : "N/A")),
+          el("div", { class: "stat-row" },
+            el("span", { class: "label" }, "Net Worth:"),
+            el("span", { class: "value" }, latest.net_worth ? `$${latest.net_worth.toLocaleString()}` : "N/A")),
+          el("div", { class: "stat-row" },
+            el("span", { class: "label" }, "Total Assets:"),
+            el("span", { class: "value" }, latest.total_assets ? `$${latest.total_assets.toLocaleString()}` : "N/A")),
+          el("div", { class: "stat-row" },
+            el("span", { class: "label" }, "Total Debt:"),
+            el("span", { class: "value" }, latest.total_debt ? `$${latest.total_debt.toLocaleString()}` : "N/A")),
+          latest.source ? el("div", { class: "muted", style: "margin-top:8px" }, `Source: ${latest.source}`) : null,
+        el("div", { class: "lc-actions" },
+          el("button", { class: "btn secondary" }, "View Details"))));
+      root.append(card);
+    });
+  } catch (e) {
+    root.append(el("div", { class: "empty" },
+      el("h3", {}, "Error loading financial data"),
+      el("p", { class: "muted" }, String(e))));
+  }
+}
 
 // ====================== Country Impact ======================
 const countryState = { selected: new Set(), initialized: false, sub: "admins" };

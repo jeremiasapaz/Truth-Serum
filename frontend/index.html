@@ -20,6 +20,7 @@
       <button class="tab active" data-view="dashboard">Dashboard</button>
       <button class="tab" data-view="compare">Compare</button>
       <button class="tab" data-view="country">Public Impact</button>
+      <button class="tab" data-view="financial">Financial Transparency</button>
       <button class="tab" data-view="transcripts">Speech Transcripts</button>
       <button class="tab" data-view="sources">Sources</button>
       <button class="tab" data-view="methodology">Methodology</button>
@@ -86,6 +87,14 @@
       <div id="country-dash" style="padding:20px 24px; display:none"></div>
     </section>
 
+    <!-- Financial Transparency -->
+    <section id="view-financial" class="view">
+      <div class="compare-bar">
+        <h2>Financial Transparency <span class="muted">(Salary, Assets, Wealth vs. Legitimate Income)</span></h2>
+      </div>
+      <div id="financial-grid" class="leader-grid" style="padding:20px 24px"></div>
+    </section>
+
     <!-- Speech Transcripts -->
     <section id="view-transcripts" class="view">
       <div class="compare-bar">
@@ -117,6 +126,6 @@
     <div class="modal-panel" id="evidence-panel"></div>
   </div>
 
-  <script src="/static/app.js?v=10"></script>
+  <script src="/static/app.js?v=12"></script>
 </body>
 </html>
