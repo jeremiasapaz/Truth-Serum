@@ -625,18 +625,16 @@ function gauge(label, value, range, delta) {
   const numValue = typeof value === "object" ? value?.score : value;
   const numDelta = typeof value === "object" ? value?.delta : delta;
   const v = numValue == null ? "—" : numValue;
-  console.log(`gauge: ${label}, value=${numValue}, delta=${numDelta}, range=${range}`);
   let color;
   if (range === "lis") {
     color = totalColor(numValue || 0);
   } else if (numDelta != null) {
-    // Color based on improvement (positive delta = green, negative = red)
+    // Delta is already direction-adjusted: positive = improvement (green), negative = decline (red)
     color = numDelta >= 0 ? "var(--pos)" : "var(--neg)";
   } else {
     // Fallback to absolute score coloring
     color = numValue == null ? "#8b98a8" : numValue >= 60 ? "#3fb950" : numValue >= 40 ? "#d29922" : "#f85149";
   }
-  console.log(`gauge color: ${color}`);
   return el("div", { class: "gauge" },
     el("div", { class: "gauge-val", style: `color:${color}` }, v === "—" ? v : (range === "lis" && numValue > 0 ? "+" + numValue : "" + numValue)),
     el("div", { class: "muted" }, label));
@@ -754,9 +752,9 @@ async function openAdministration(id) {
   const tbl = el("table", { class: "ind-table" },
     el("tr", {}, el("th", {}, "Indicator"), el("th", {}, "Baseline"), el("th", {}, "Admin"), el("th", {}, "Δ"), el("th", {}, "Source")));
   d.indicators.forEach((i) => {
-    // Color based on metric direction: for lower_better, a positive delta is bad (red)
-    const isGood = i.direction === "higher_better" ? (i.delta || 0) >= 0 : (i.delta || 0) < 0;
-    const color = i.delta == null ? "#8b98a8" : (isGood ? "var(--pos)" : "var(--neg)");
+    // Delta is already direction-adjusted (normalized score difference)
+    // Positive delta = improvement (green), Negative delta = decline (red)
+    const color = i.delta == null ? "#8b98a8" : (i.delta >= 0 ? "var(--pos)" : "var(--neg)");
     tbl.append(el("tr", {},
       el("td", {}, i.name + ` (${i.unit})`),
       el("td", {}, fmt(i.baseline_mean)),
