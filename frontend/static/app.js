@@ -238,10 +238,14 @@ function applyTranslations() {
   document.title = t("title");
   $(".brand h1").textContent = t("title");
   $(".tagline").textContent = t("tagline");
-  $$(".tab").forEach((tab, i) => {
-    const keys = ["dashboard", "compare", "country", "financial", "transcripts", "sources", "methodology"];
-    if (keys[i]) tab.textContent = t(keys[i]);
-  });
+  
+  // Update tabs by ID to ensure they're updated
+  if ($("#tab-country")) $("#tab-country").textContent = t("country");
+  if ($("#tab-financial")) $("#tab-financial").textContent = t("financial");
+  if ($("#tab-transcripts")) $("#tab-transcripts").textContent = t("transcripts");
+  if ($("#tab-sources")) $("#tab-sources").textContent = t("sources");
+  if ($("#tab-methodology")) $("#tab-methodology").textContent = t("methodology");
+  
   $("#lang-switch").textContent = currentLang === "en" ? "🇧🇷 PT" : "🇺🇸 EN";
   
   // Update dynamic elements
@@ -868,7 +872,7 @@ async function renderFinancial() {
             el("span", { class: "value" }, latest.total_debt ? `$${latest.total_debt.toLocaleString()}` : "N/A")),
           latest.source ? el("div", { class: "muted", style: "margin-top:8px" }, `Source: ${latest.source}`) : null,
         el("div", { class: "lc-actions" },
-          el("button", { class: "btn secondary" }, "View Details"))));
+          el("button", { class: "btn secondary", onclick: () => alert("Detailed financial view coming soon!") }, "View Details"))));
       root.append(card);
     });
   } catch (e) {
