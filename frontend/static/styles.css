@@ -59,6 +59,14 @@ h1, h2, h3 { margin: 0; }
 .llm-badge.on { color: var(--pos); border-color: var(--pos); }
 .llm-badge.off { color: var(--warn); border-color: var(--warn); }
 
+/* Transcript cards */
+.tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.tag { 
+  padding: 4px 10px; border-radius: 999px; font-size: 11px; 
+  background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+}
+.lc-actions { display: flex; gap: 8px; margin-top: 12px; }
+
 /* Views */
 .view { display: none; }
 .view.active { display: block; }

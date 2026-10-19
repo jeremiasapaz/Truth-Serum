@@ -21,6 +21,7 @@ const TRANSLATIONS = {
     dashboard: "Dashboard",
     compare: "Compare",
     country: "Country Impact",
+    transcripts: "Speech Transcripts",
     sources: "Sources",
     methodology: "Methodology",
     leaders: "Leaders",
@@ -96,6 +97,7 @@ const TRANSLATIONS = {
     dashboard: "Painel",
     compare: "Comparar",
     country: "Impacto no País",
+    transcripts: "Transcrições de Discursos",
     sources: "Fontes",
     methodology: "Metodologia",
     leaders: "Líderes",
@@ -218,6 +220,7 @@ $$(".tab").forEach((t) =>
     if (t.dataset.view === "compare") renderComparePicker();
     if (t.dataset.view === "methodology") renderMethodology();
     if (t.dataset.view === "country") renderCountryTab();
+    if (t.dataset.view === "transcripts") renderTranscripts();
     if (t.dataset.view === "sources") renderSources();
   })
 );
@@ -233,7 +236,7 @@ function applyTranslations() {
   $(".brand h1").textContent = t("title");
   $(".tagline").textContent = t("tagline");
   $$(".tab").forEach((tab, i) => {
-    const keys = ["dashboard", "compare", "country", "sources", "methodology"];
+    const keys = ["dashboard", "compare", "country", "transcripts", "sources", "methodology"];
     if (keys[i]) tab.textContent = t(keys[i]);
   });
   $("#lang-switch").textContent = currentLang === "en" ? "🇧🇷 PT" : "🇺🇸 EN";
@@ -762,6 +765,53 @@ async function renderSources() {
   sr.append(srT);
   root.append(sr);
 }
+
+// ====================== Speech Transcripts ======================
+async function renderTranscripts() {
+  const root = $("#transcripts-grid");
+  root.innerHTML = "";
+  
+  try {
+    const transcripts = await api("/api/transcripts");
+    
+    if (transcripts.length === 0) {
+      root.append(el("div", { class: "empty" },
+        el("h3", {}, "No transcripts yet"),
+        el("p", { class: "muted" }, "Click '+ Add Transcript' to submit a video transcript manually.")));
+      return;
+    }
+    
+    transcripts.forEach((t) => {
+      const card = el("div", { class: "leader-card" },
+        el("div", { class: "lc-head" },
+          el("h3", {}, t.title),
+          el("div", { class: "sub" }, `${t.leader_name} · ${t.platform} · ${t.date || 'Unknown date'}`)),
+        el("div", { class: "lc-body" },
+          el("p", { class: "muted" }, t.transcript_text.substring(0, 200) + "..."),
+          t.offense_categories ? el("div", { class: "tags" },
+            ...t.offense_categories.split(",").map((cat) => el("span", { class: "tag" }, cat.trim()))) : null,
+        el("div", { class: "lc-actions" },
+          el("a", { href: t.video_url, target: "_blank", class: "btn secondary" }, "Watch Video"),
+          el("button", { class: "btn secondary", onclick: () => viewTranscript(t.id) }, "View Full Transcript"))));
+      root.append(card);
+    });
+  } catch (e) {
+    root.append(el("div", { class: "empty" },
+      el("h3", {}, "Error loading transcripts"),
+      el("p", { class: "muted" }, String(e))));
+  }
+}
+
+function viewTranscript(id) {
+  // TODO: Implement modal to view full transcript
+  alert("Full transcript view coming soon!");
+}
+
+// Add transcript button
+$("#add-transcript-btn").addEventListener("click", () => {
+  // TODO: Implement submission form
+  alert("Manual transcript submission coming soon!");
+});
 
 // ====================== Country Impact ======================
 const countryState = { selected: new Set(), initialized: false, sub: "admins" };

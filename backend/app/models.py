@@ -151,3 +151,46 @@ class IndicatorValue(Base):
     source_name = Column(String, nullable=True)
     source_url = Column(String, nullable=True)
     collected_at = Column(DateTime, default=utcnow)
+
+
+# ===========================================================================
+# Speech Transcripts
+# ===========================================================================
+class SpeechTranscript(Base):
+    """Transcript of a political speech or public statement from video platforms."""
+
+    __tablename__ = "speech_transcripts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    leader_id = Column(Integer, ForeignKey("leaders.id"), nullable=False)
+    
+    # Video/platform metadata
+    platform = Column(String, index=True, nullable=False)  # youtube, tiktok, etc.
+    video_url = Column(String, nullable=False, index=True)
+    video_id = Column(String, index=True)  # YouTube video ID, TikTok ID, etc.
+    
+    # Speech metadata
+    title = Column(String, nullable=False)
+    date = Column(DateTime, nullable=True)
+    location = Column(String, nullable=True)
+    event = Column(String, nullable=True)  # e.g., "Campaign rally", "Press conference"
+    
+    # Transcript
+    transcript_text = Column(Text, nullable=False)
+    language = Column(String, default="en")  # en, pt, etc.
+    
+    # Classification (LLM analysis)
+    offense_categories = Column(String, nullable=True)  # e.g., "racist,homophobic"
+    flagged_quotes = Column(Text, nullable=True)  # JSON array of problematic quotes
+    classification_confidence = Column(Float, default=0.0)
+    classified_by = Column(String, default="manual")  # manual, llm
+    
+    # Submission metadata
+    submitted_by = Column(String, nullable=True)  # user who submitted
+    submitted_at = Column(DateTime, default=utcnow)
+    verified = Column(Integer, default=0)  # 0 = unverified, 1 = verified
+    
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    leader = relationship("Leader")

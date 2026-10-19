@@ -20,6 +20,7 @@
       <button class="tab active" data-view="dashboard">Dashboard</button>
       <button class="tab" data-view="compare">Compare</button>
       <button class="tab" data-view="country">Country Impact</button>
+      <button class="tab" data-view="transcripts">Speech Transcripts</button>
       <button class="tab" data-view="sources">Sources</button>
       <button class="tab" data-view="methodology">Methodology</button>
     </nav>
@@ -85,6 +86,15 @@
       <div id="country-dash" style="padding:20px 24px; display:none"></div>
     </section>
 
+    <!-- Speech Transcripts -->
+    <section id="view-transcripts" class="view">
+      <div class="compare-bar">
+        <h2>Speech Transcripts <span class="muted">(Video evidence from YouTube, TikTok, etc.)</span></h2>
+        <button class="btn" id="add-transcript-btn">+ Add Transcript</button>
+      </div>
+      <div id="transcripts-grid" class="leader-grid" style="padding:20px 24px"></div>
+    </section>
+
     <!-- Sources -->
     <section id="view-sources" class="view">
       <div id="sources" class="methodology"></div>
@@ -107,6 +117,6 @@
     <div class="modal-panel" id="evidence-panel"></div>
   </div>
 
-  <script src="/static/app.js?v=7"></script>
+  <script src="/static/app.js?v=8"></script>
 </body>
 </html>

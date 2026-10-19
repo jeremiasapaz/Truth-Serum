@@ -9,7 +9,7 @@ from .config import get_settings
 from .country.seed import seed_administrations
 from .database import Base, SessionLocal, engine
 from .ingest.seed_leaders import ensure_real_leaders
-from .routers import compare, country, evidence, ingest, leaders, scoring, sources
+from .routers import compare, country, evidence, ingest, leaders, scoring, sources, transcripts
 
 app = FastAPI(
     title="Truth Serum",
@@ -34,6 +34,7 @@ app.include_router(scoring.router)
 app.include_router(ingest.router)
 app.include_router(country.router)
 app.include_router(sources.router)
+app.include_router(transcripts.router)
 
 
 @app.on_event("startup")
