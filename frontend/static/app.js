@@ -882,7 +882,7 @@ async function renderFinancial() {
   }
 }
 
-// ====================== Country Impact ======================
+// ====================== Public Impact ======================
 const countryState = { selected: new Set(), initialized: false, sub: "admins" };
 const PERF_CATS = ["Security", "Education", "Health", "Economy", "Democracy", "Environment"];
 
