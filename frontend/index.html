@@ -21,6 +21,7 @@
       <button class="tab" data-view="compare">Compare</button>
       <button class="tab" data-view="country" id="tab-country">Country Impact</button>
       <button class="tab" data-view="financial" id="tab-financial">Financial Transparency</button>
+      <button class="tab" data-view="videos" id="tab-videos">Videos</button>
       <button class="tab" data-view="transcripts" id="tab-transcripts">Speech Transcripts</button>
       <button class="tab" data-view="sources" id="tab-sources">Sources</button>
       <button class="tab" data-view="methodology" id="tab-methodology">Methodology</button>
@@ -87,6 +88,32 @@
       <div id="country-dash" style="padding:20px 24px; display:none"></div>
     </section>
 
+    <!-- Videos -->
+    <section id="view-videos" class="view">
+      <div class="compare-bar">
+        <h2>Videos <span class="muted">(YouTube, Instagram, etc.)</span></h2>
+      </div>
+      <div id="videos-grid" class="leader-grid" style="padding:20px 24px">
+        <div class="video-card">
+          <div class="video-embed">
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/dvOoiv5l5v0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          </div>
+          <div class="video-info">
+            <h3>YouTube Short</h3>
+            <p class="muted">https://www.youtube.com/shorts/dvOoiv5l5v0</p>
+            <a href="https://www.youtube.com/shorts/dvOoiv5l5v0" target="_blank" class="btn secondary">Watch on YouTube</a>
+          </div>
+        </div>
+        <div class="video-card">
+          <div class="video-info">
+            <h3>Instagram Post</h3>
+            <p class="muted">https://www.instagram.com/p/Dep-p7hNQ2_/</p>
+            <a href="https://www.instagram.com/p/Dep-p7hNQ2_/" target="_blank" class="btn secondary">View on Instagram</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Financial Transparency -->
     <section id="view-financial" class="view">
       <div class="compare-bar">
@@ -126,6 +153,20 @@
     <div class="modal-panel" id="evidence-panel"></div>
   </div>
 
-  <script src="/static/app.js?v=18"></script>
+  <!-- Portuguese Video Popup -->
+  <div id="pt-popup" class="popup-overlay" style="display:none">
+    <div class="popup-content">
+      <button class="popup-close" onclick="closePtPopup()">×</button>
+      <div class="video-embed">
+        <iframe width="100%" height="315" src="https://www.youtube.com/embed/dvOoiv5l5v0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      <div class="popup-info">
+        <h3>Assista no YouTube</h3>
+        <a href="https://www.youtube.com/shorts/dvOoiv5l5v0" target="_blank" class="btn">Abrir no YouTube</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=20"></script>
 </body>
 </html>

@@ -22,6 +22,7 @@ const TRANSLATIONS = {
     compare: "Compare",
     country: "Public Impact",
     financial: "Financial Transparency",
+    videos: "Videos",
     transcripts: "Speech Transcripts",
     sources: "Sources",
     methodology: "Methodology",
@@ -99,6 +100,7 @@ const TRANSLATIONS = {
     compare: "Comparar",
     country: "Impacto Público",
     financial: "Transparência Financeira",
+    videos: "Vídeos",
     transcripts: "Transcrições de Discursos",
     sources: "Fontes",
     methodology: "Metodologia",
@@ -224,6 +226,7 @@ $$(".tab").forEach((t) =>
     if (t.dataset.view === "country") renderCountryTab();
     if (t.dataset.view === "transcripts") renderTranscripts();
     if (t.dataset.view === "financial") renderFinancial();
+    if (t.dataset.view === "videos") renderVideos();
     if (t.dataset.view === "sources") renderSources();
   })
 );
@@ -242,11 +245,20 @@ function applyTranslations() {
   // Update tabs by ID to ensure they're updated
   if ($("#tab-country")) $("#tab-country").textContent = t("country");
   if ($("#tab-financial")) $("#tab-financial").textContent = t("financial");
+  if ($("#tab-videos")) $("#tab-videos").textContent = t("videos");
   if ($("#tab-transcripts")) $("#tab-transcripts").textContent = t("transcripts");
   if ($("#tab-sources")) $("#tab-sources").textContent = t("sources");
   if ($("#tab-methodology")) $("#tab-methodology").textContent = t("methodology");
   
   $("#lang-switch").textContent = currentLang === "en" ? "🇧🇷 PT" : "🇺🇸 EN";
+  
+  // Show Portuguese popup if language is Portuguese
+  if (currentLang === "pt") {
+    const popupShown = localStorage.getItem("ptPopupShown");
+    if (!popupShown) {
+      $("#pt-popup").style.display = "flex";
+    }
+  }
   
   // Update dynamic elements
   const leadersTitle = $("#leaders-title");
@@ -508,6 +520,11 @@ async function rescore(id, btn) {
 function closeDrawer() {
   $("#drawer").classList.remove("show");
   $("#overlay").classList.remove("show");
+}
+
+function closePtPopup() {
+  $("#pt-popup").style.display = "none";
+  localStorage.setItem("ptPopupShown", "true");
 }
 $("#overlay").addEventListener("click", closeDrawer);
 
@@ -828,6 +845,11 @@ $("#add-transcript-btn").addEventListener("click", () => {
   // TODO: Implement submission form
   alert("Manual transcript submission coming soon!");
 });
+
+// ====================== Videos ======================
+function renderVideos() {
+  // Videos are already embedded in HTML, no dynamic rendering needed
+}
 
 // ====================== Financial Transparency ======================
 async function renderFinancial() {
