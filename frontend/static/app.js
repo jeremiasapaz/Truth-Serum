@@ -286,29 +286,34 @@ function applyTranslations() {
 
 // ---------- init ----------
 async function init() {
-  const health = await api("/api/health");
-  state.llm = health.llm_enabled;
-  const badge = $("#llm-badge");
-  badge.textContent = health.llm_enabled ? "LLM scoring: ON" : "LLM scoring: OFF (engine)";
-  badge.classList.add(health.llm_enabled ? "on" : "off");
+  try {
+    const health = await api("/api/health");
+    state.llm = health.llm_enabled;
+    const badge = $("#llm-badge");
+    badge.textContent = health.llm_enabled ? "LLM scoring: ON" : "LLM scoring: OFF (engine)";
+    badge.classList.add(health.llm_enabled ? "on" : "off");
 
-  // Check authentication
-  await checkAuth();
-  
-  // Setup auth event listeners
-  $("#login-btn").addEventListener("click", () => openAuthModal("login"));
-  $("#signup-btn").addEventListener("click", () => openAuthModal("signup"));
-  $("#logout-btn").addEventListener("click", logout);
-  $("#upgrade-btn").addEventListener("click", openSubscriptionModal);
-  $("#auth-form").addEventListener("submit", handleAuth);
+    // Check authentication
+    await checkAuth();
+    
+    // Setup auth event listeners
+    $("#login-btn").addEventListener("click", () => openAuthModal("login"));
+    $("#signup-btn").addEventListener("click", () => openAuthModal("signup"));
+    $("#logout-btn").addEventListener("click", logout);
+    $("#upgrade-btn").addEventListener("click", openSubscriptionModal);
+    $("#auth-form").addEventListener("submit", handleAuth);
 
-  state.options = await api("/api/leaders/filters/options");
-  buildFilters();
-  buildSort();
-  await loadLeaders();
-  
-  // Apply translations
-  applyTranslations();
+    state.options = await api("/api/leaders/filters/options");
+    buildFilters();
+    buildSort();
+    await loadLeaders();
+    
+    // Apply translations
+    applyTranslations();
+  } catch (e) {
+    console.error("Init error:", e);
+    alert("Failed to load application: " + e.message);
+  }
 }
 
 // ---------- filters ----------
