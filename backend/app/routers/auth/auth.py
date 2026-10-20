@@ -2,6 +2,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import Optional
 
+import stripe
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -13,6 +14,10 @@ from ...database import get_db
 from ...models import User, Subscription
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+# Stripe configuration
+STRIPE_SECRET_KEY = "sk_test_your_stripe_key_here"  # TODO: Move to env
+stripe.api_key = STRIPE_SECRET_KEY
 
 # Security
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -52,6 +57,15 @@ class SubscriptionResponse(BaseModel):
     price_monthly: float
     price_yearly: Optional[float]
     features: dict
+
+
+class CreateCheckoutSessionRequest(BaseModel):
+    tier: str  # free, pro, enterprise
+    billing_cycle: str  # monthly, yearly
+
+
+class CheckoutSessionResponse(BaseModel):
+    checkout_url: str
 
 
 # Helper functions
@@ -197,3 +211,66 @@ async def list_subscriptions(db: Session = Depends(get_db)):
         )
         for sub in subscriptions
     ]
+
+
+@router.post("/create-checkout-session", response_model=CheckoutSessionResponse)
+async def create_checkout_session(
+    request: CreateCheckoutSessionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a Stripe checkout session for subscription upgrade."""
+    # Get subscription plan
+    subscription = db.query(Subscription).filter(Subscription.name == request.tier).first()
+    if not subscription:
+        raise HTTPException(status_code=404, detail="Subscription plan not found")
+    
+    # Determine price based on billing cycle
+    if request.billing_cycle == "yearly":
+        price_amount = int(subscription.price_yearly * 100) if subscription.price_yearly else 0
+    else:
+        price_amount = int(subscription.price_monthly * 100)
+    
+    # For now, return a placeholder URL (Stripe integration requires actual Stripe account)
+    # TODO: Replace with actual Stripe checkout session creation
+    checkout_url = f"https://checkout.stripe.com/c/pay/{request.tier}_{request.billing_cycle}"
+    
+    return CheckoutSessionResponse(checkout_url=checkout_url)
+
+
+@router.post("/upgrade")
+async def upgrade_subscription(
+    tier: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Upgrade user subscription (called after successful Stripe payment)."""
+    # Validate tier
+    subscription = db.query(Subscription).filter(Subscription.name == tier).first()
+    if not subscription:
+        raise HTTPException(status_code=404, detail="Subscription plan not found")
+    
+    # Update user subscription
+    current_user.subscription_tier = tier
+    current_user.subscription_status = "active"
+    current_user.subscription_start = datetime.now(UTC)
+    db.commit()
+    
+    return {"message": f"Upgraded to {subscription.display_name}"}
+
+
+@router.post("/cancel")
+async def cancel_subscription(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cancel user subscription."""
+    if current_user.subscription_tier == "free":
+        raise HTTPException(status_code=400, detail="Already on free tier")
+    
+    current_user.subscription_tier = "free"
+    current_user.subscription_status = "cancelled"
+    current_user.subscription_end = datetime.now(UTC)
+    db.commit()
+    
+    return {"message": "Subscription cancelled"}

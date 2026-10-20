@@ -89,6 +89,29 @@ h1, h2, h3 { margin: 0; }
 .popup-info { margin-top: 16px; text-align: center; }
 .popup-info h3 { margin: 0 0 12px 0; }
 
+/* Auth Modal */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; margin-bottom: 6px; color: var(--muted); }
+.form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2); color: var(--fg); }
+.form-group input:focus { outline: none; border-color: var(--accent); }
+
+/* Subscription Plans */
+.subscription-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px; }
+.plan-card { border: 1px solid var(--border); border-radius: 8px; padding: 20px; text-align: center; }
+.plan-card.featured { border: 2px solid var(--accent); }
+.plan-card h3 { margin: 0 0 8px 0; }
+.plan-card .price { font-size: 24px; font-weight: bold; margin: 12px 0; }
+.plan-card .price span { font-size: 14px; color: var(--muted); }
+.plan-card ul { list-style: none; padding: 0; margin: 16px 0; text-align: left; }
+.plan-card li { padding: 4px 0; }
+.plan-card li::before { content: "✓ "; color: var(--accent); }
+.plan-card button { width: 100%; margin-top: 12px; }
+
+/* User Menu */
+#user-menu { display: flex; align-items: center; gap: 12px; }
+#user-name { color: var(--fg); }
+.badge { padding: 4px 10px; border-radius: 999px; font-size: 11px; background: var(--accent); color: white; }
+
 /* Views */
 .view { display: none; }
 .view.active { display: block; }

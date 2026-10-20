@@ -1,9 +1,22 @@
 // Leader Transparency Scoring Platform — frontend
-const API = "";
+const API = "http://localhost:8001";
 const CATEGORY_ORDER = [
   "Corruption", "Crime", "Environmental Crime", "Male Chauvinism", "Homophobia",
   "Personal Integrity", "Court Proceedings", "Scandals", "Human Rights", "Democratic Integrity",
 ];
+
+async function api(endpoint, method = "GET", token = null, body = null) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  
+  const res = await fetch(API + endpoint, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null,
+  });
+  if (!res.ok) throw new Error(res.statusText);
+  return res.json();
+}
 
 const CLASS_COLORS = {
   "VERIFIED FACT": "#3fb950", "OFFICIAL RECORD": "#3fb950", "COURT RECORD": "#2ea043",
@@ -278,6 +291,16 @@ async function init() {
   const badge = $("#llm-badge");
   badge.textContent = health.llm_enabled ? "LLM scoring: ON" : "LLM scoring: OFF (engine)";
   badge.classList.add(health.llm_enabled ? "on" : "off");
+
+  // Check authentication
+  await checkAuth();
+  
+  // Setup auth event listeners
+  $("#login-btn").addEventListener("click", () => openAuthModal("login"));
+  $("#signup-btn").addEventListener("click", () => openAuthModal("signup"));
+  $("#logout-btn").addEventListener("click", logout);
+  $("#upgrade-btn").addEventListener("click", openSubscriptionModal);
+  $("#auth-form").addEventListener("submit", handleAuth);
 
   state.options = await api("/api/leaders/filters/options");
   buildFilters();
@@ -845,6 +868,181 @@ $("#add-transcript-btn").addEventListener("click", () => {
   // TODO: Implement submission form
   alert("Manual transcript submission coming soon!");
 });
+
+// ====================== Auth ======================
+let currentUser = null;
+let authToken = localStorage.getItem("authToken");
+
+function updateAuthUI() {
+  if (currentUser) {
+    $("#login-btn").style.display = "none";
+    $("#signup-btn").style.display = "none";
+    $("#user-menu").style.display = "flex";
+    $("#user-name").textContent = currentUser.name || currentUser.email;
+    $("#user-tier").textContent = currentUser.subscription_tier.toUpperCase();
+  } else {
+    $("#login-btn").style.display = "inline-block";
+    $("#signup-btn").style.display = "inline-block";
+    $("#user-menu").style.display = "none";
+  }
+}
+
+async function checkAuth() {
+  if (!authToken) {
+    updateAuthUI();
+    return;
+  }
+  
+  try {
+    const user = await api("/api/auth/me", "GET", authToken);
+    currentUser = user;
+    localStorage.setItem("authToken", authToken);
+    updateAuthUI();
+  } catch (e) {
+    localStorage.removeItem("authToken");
+    authToken = null;
+    updateAuthUI();
+  }
+}
+
+function openAuthModal(mode = "login") {
+  const modal = $("#auth-modal");
+  modal.style.display = "flex";
+  
+  const isLogin = mode === "login";
+  $("#auth-title").textContent = isLogin ? "Login" : "Sign Up";
+  $("#auth-submit").textContent = isLogin ? "Login" : "Sign Up";
+  $("#auth-name-group").style.display = isLogin ? "none" : "block";
+  $("#auth-switch-text").textContent = isLogin ? "Don't have an account?" : "Already have an account?";
+  $("#auth-switch-link").textContent = isLogin ? "Sign up" : "Login";
+  $("#auth-switch-link").onclick = () => openAuthModal(isLogin ? "signup" : "login");
+}
+
+function closeAuthModal() {
+  $("#auth-modal").style.display = "none";
+}
+
+async function handleAuth(e) {
+  e.preventDefault();
+  const email = $("#auth-email").value;
+  const password = $("#auth-password").value;
+  const name = $("#auth-name").value;
+  const isLogin = $("#auth-title").textContent === "Login";
+  
+  try {
+    const formData = new FormData();
+    formData.append("username", email);
+    formData.append("password", password);
+    
+    const response = await fetch(API + (isLogin ? "/api/auth/login" : "/api/auth/signup"), {
+      method: "POST",
+      body: formData,
+    });
+    
+    if (!response.ok) throw new Error("Authentication failed");
+    
+    const data = await response.json();
+    authToken = data.access_token;
+    currentUser = data.user;
+    localStorage.setItem("authToken", authToken);
+    closeAuthModal();
+    updateAuthUI();
+  } catch (e) {
+    alert("Authentication failed: " + e.message);
+  }
+}
+
+async function logout() {
+  localStorage.removeItem("authToken");
+  authToken = null;
+  currentUser = null;
+  updateAuthUI();
+}
+
+// ====================== Subscription ======================
+async function openSubscriptionModal() {
+  const modal = $("#subscription-modal");
+  modal.style.display = "flex";
+  
+  try {
+    const plans = await api("/api/auth/subscriptions");
+    const container = $("#subscription-plans");
+    container.innerHTML = "";
+    
+    plans.forEach((plan, i) => {
+      const card = el("div", { class: "plan-card" + (i === 1 ? " featured" : "") },
+        el("h3", {}, plan.display_name),
+        el("div", { class: "price" },
+          `$${plan.price_monthly}`,
+          el("span", {}, "/month")),
+        el("p", { class: "muted" }, plan.description),
+        el("ul", {},
+          plan.features.max_api_calls_per_month > 100 ? el("li", {}, `${plan.features.max_api_calls_per_month.toLocaleString()} API calls/month`) : null,
+          plan.features.max_comparisons > 5 ? el("li", {}, "Unlimited comparisons") : null,
+          !plan.features.has_ads ? el("li", {}, "No ads") : null,
+          plan.features.has_advanced_analytics ? el("li", {}, "Advanced analytics") : null,
+          plan.features.has_api_access ? el("li", {}, "API access") : null,
+          plan.features.has_data_export ? el("li", {}, "Data export") : null,
+          plan.features.has_custom_reports ? el("li", {}, "Custom reports") : null,
+          plan.features.has_real_time_alerts ? el("li", {}, "Real-time alerts") : null,
+        ),
+        el("button", { class: "btn", onclick: () => upgradeSubscription(plan.name) }, 
+          plan.name === "free" ? "Current" : "Upgrade"));
+      container.append(card);
+    });
+  } catch (e) {
+    container.innerHTML = el("p", { class: "muted" }, "Failed to load subscription plans");
+  }
+}
+
+function closeSubscriptionModal() {
+  $("#subscription-modal").style.display = "none";
+}
+
+async function upgradeSubscription(tier) {
+  if (!currentUser) {
+    openAuthModal("signup");
+    return;
+  }
+  
+  if (tier === "free") {
+    alert("You're already on the free tier");
+    return;
+  }
+  
+  try {
+    const response = await fetch(API + "/api/auth/create-checkout-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ tier, billing_cycle: "monthly" }),
+    });
+    
+    if (!response.ok) throw new Error("Failed to create checkout session");
+    
+    const data = await response.json();
+    // For now, just alert the URL (in production, redirect to Stripe checkout)
+    alert("In production, this would redirect to Stripe checkout. URL: " + data.checkout_url);
+    
+    // Simulate successful payment
+    await fetch(API + "/api/auth/upgrade", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ tier }),
+    });
+    
+    await checkAuth();
+    closeSubscriptionModal();
+    alert("Successfully upgraded to " + tier.toUpperCase());
+  } catch (e) {
+    alert("Failed to upgrade: " + e.message);
+  }
+}
 
 // ====================== Videos ======================
 function renderVideos() {
