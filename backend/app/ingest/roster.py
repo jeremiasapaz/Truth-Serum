@@ -92,6 +92,36 @@ ROSTER: dict[str, LeaderSpec] = {
         political_affiliation="Democratic Party", current=0, office="Vice President",
         wikipedia=[("en", "Kamala Harris")], news_query='"Kamala Harris"',
     ),
+    "joe-biden": LeaderSpec(
+        slug="joe-biden", name="Joe Biden", country="United States",
+        region="North America", continent="North America",
+        political_affiliation="Democratic Party", current=0, office="Former President",
+        wikipedia=[("en", "Joe Biden")], news_query='"Joe Biden"',
+    ),
+    "barack-obama": LeaderSpec(
+        slug="barack-obama", name="Barack Obama", country="United States",
+        region="North America", continent="North America",
+        political_affiliation="Democratic Party", current=0, office="Former President",
+        wikipedia=[("en", "Barack Obama")], news_query='"Barack Obama"',
+    ),
+    "george-w-bush": LeaderSpec(
+        slug="george-w-bush", name="George W. Bush", country="United States",
+        region="North America", continent="North America",
+        political_affiliation="Republican Party", current=0, office="Former President",
+        wikipedia=[("en", "George W. Bush")], news_query='"George W. Bush"',
+    ),
+    "bill-clinton": LeaderSpec(
+        slug="bill-clinton", name="Bill Clinton", country="United States",
+        region="North America", continent="North America",
+        political_affiliation="Democratic Party", current=0, office="Former President",
+        wikipedia=[("en", "Bill Clinton")], news_query='"Bill Clinton"',
+    ),
+    "ronald-reagan": LeaderSpec(
+        slug="ronald-reagan", name="Ronald Reagan", country="United States",
+        region="North America", continent="North America",
+        political_affiliation="Republican Party", current=0, office="Former President",
+        wikipedia=[("en", "Ronald Reagan")], news_query='"Ronald Reagan"',
+    ),
     "vladimir-putin": LeaderSpec(
         slug="vladimir-putin", name="Vladimir Putin", country="Russia",
         region="Eastern Europe", continent="Europe",
