@@ -930,13 +930,14 @@ async function handleAuth(e) {
   const isLogin = $("#auth-title").textContent === "Login";
   
   try {
-    const formData = new FormData();
-    formData.append("username", email);
-    formData.append("password", password);
+    const body = isLogin 
+      ? { username: email, password: password }
+      : { email, password, name };
     
     const response = await fetch(API + (isLogin ? "/api/auth/login" : "/api/auth/signup"), {
       method: "POST",
-      body: formData,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(body),
     });
     
     if (!response.ok) throw new Error("Authentication failed");
