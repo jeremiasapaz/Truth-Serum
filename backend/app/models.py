@@ -155,64 +155,6 @@ class IndicatorValue(Base):
 
 
 # ===========================================================================
-# User & Subscription
-# ===========================================================================
-class User(Base):
-    """User accounts for authentication and subscription management."""
-
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, nullable=False, index=True)
-    password_hash = Column(String, nullable=False)
-    name = Column(String, nullable=True)
-    
-    # Subscription
-    subscription_tier = Column(String, default="free")  # free, pro, enterprise
-    subscription_status = Column(String, default="active")  # active, cancelled, past_due
-    subscription_start = Column(DateTime, nullable=True)
-    subscription_end = Column(DateTime, nullable=True)
-    stripe_customer_id = Column(String, nullable=True)
-    stripe_subscription_id = Column(String, nullable=True)
-    
-    # Usage tracking
-    api_calls_this_month = Column(Integer, default=0)
-    api_calls_reset_date = Column(DateTime, nullable=True)
-    
-    created_at = Column(DateTime, default=utcnow)
-    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
-
-
-class Subscription(Base):
-    """Subscription plans and pricing."""
-
-    __tablename__ = "subscriptions"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, nullable=False)  # free, pro, enterprise
-    display_name = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
-    price_monthly = Column(Float, nullable=False)
-    price_yearly = Column(Float, nullable=True)
-    stripe_price_id_monthly = Column(String, nullable=True)
-    stripe_price_id_yearly = Column(String, nullable=True)
-    
-    # Features
-    max_api_calls_per_month = Column(Integer, default=100)
-    max_comparisons = Column(Integer, default=5)
-    max_reports = Column(Integer, default=0)
-    has_ads = Column(Boolean, default=True)
-    has_advanced_analytics = Column(Boolean, default=False)
-    has_api_access = Column(Boolean, default=False)
-    has_data_export = Column(Boolean, default=False)
-    has_custom_reports = Column(Boolean, default=False)
-    has_real_time_alerts = Column(Boolean, default=False)
-    
-    created_at = Column(DateTime, default=utcnow)
-    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
-
-
-# ===========================================================================
 # Financial Transparency
 # ===========================================================================
 class FinancialData(Base):

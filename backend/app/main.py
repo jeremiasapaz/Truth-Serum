@@ -12,7 +12,6 @@ from .ingest.seed_leaders import ensure_real_leaders
 from .routers import compare, country, evidence, ingest, leaders, scoring, sources
 from .routers.transcripts import router as transcripts_router
 from .routers.financial import router as financial_router
-from .routers.auth import router as auth_router
 
 app = FastAPI(
     title="Truth Serum",
@@ -39,7 +38,6 @@ app.include_router(country.router)
 app.include_router(sources.router)
 app.include_router(transcripts_router)
 app.include_router(financial_router)
-app.include_router(auth_router)
 
 
 @app.on_event("startup")
