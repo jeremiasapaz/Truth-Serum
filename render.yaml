@@ -33,12 +33,12 @@ services:
       - key: LLM_BACKUP_MODEL
         value: open-mistral-7b
   - type: cron
-    name: daily-update
+    name: batch-ingest
     env: python
     plan: free
     schedule: "0 13 * * *"  # 8 AM EST = 1 PM UTC (EST is UTC-5)
     buildCommand: cd backend && pip install -r requirements.txt
-    startCommand: cd backend && python -m app.cron.daily_update
+    startCommand: cd backend && python -m app.cron.batch_ingest
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
