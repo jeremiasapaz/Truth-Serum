@@ -12,6 +12,7 @@ from .ingest.seed_leaders import ensure_real_leaders
 from .routers import compare, country, evidence, ingest, leaders, scoring, sources
 from .routers.transcripts import router as transcripts_router
 from .routers.financial import router as financial_router
+from .seed_financial import seed_financial_data
 
 app = FastAPI(
     title="Truth Serum",
@@ -47,6 +48,7 @@ def on_startup():
     try:
         ensure_real_leaders(db)   # real roster (replaces fictional demo leaders)
         seed_administrations(db)
+        seed_financial_data()    # seed financial data for leaders
     finally:
         db.close()
 
