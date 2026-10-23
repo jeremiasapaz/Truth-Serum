@@ -128,6 +128,12 @@ ROSTER: dict[str, LeaderSpec] = {
         political_affiliation="Independent (formerly Labour)", current=1, office="President",
         wikipedia=[("en", "Michael D. Higgins")], news_query='"Michael D. Higgins"',
     ),
+    "catherine-connolly": LeaderSpec(
+        slug="catherine-connolly", name="Catherine Connolly", country="Ireland",
+        region="Western Europe", continent="Europe",
+        political_affiliation="Independent", current=1, office="Commissioner for Human Rights",
+        wikipedia=[("en", "Catherine Connolly (Irish politician)")], news_query='"Catherine Connolly" Ireland',
+    ),
     "keir-starmer": LeaderSpec(
         slug="keir-starmer", name="Keir Starmer", country="United Kingdom",
         region="Western Europe", continent="Europe",
