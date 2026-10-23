@@ -556,7 +556,28 @@ $("#evidence-modal").addEventListener("click", (ev) => { if (ev.target.id === "e
 function renderComparePicker() {
   const box = $("#compare-picker");
   box.innerHTML = "";
-  state.leaders.forEach((l) => {
+  
+  // Populate country filter if not already populated
+  const countrySelect = $("#compare-country");
+  if (countrySelect && countrySelect.options.length === 1) {
+    const countries = [...new Set(state.leaders.map(l => l.country))].sort();
+    countries.forEach(country => {
+      const opt = el("option", { value: country }, country);
+      countrySelect.append(opt);
+    });
+  }
+  
+  // Filter leaders based on search and country
+  const searchTerm = ($("#compare-search")?.value || "").toLowerCase();
+  const countryFilter = ($("#compare-country")?.value || "all");
+  
+  const filteredLeaders = state.leaders.filter(l => {
+    const matchesSearch = l.name.toLowerCase().includes(searchTerm);
+    const matchesCountry = countryFilter === "all" || l.country === countryFilter;
+    return matchesSearch && matchesCountry;
+  });
+  
+  filteredLeaders.forEach((l) => {
     const p = el("div", {
       class: "pick" + (state.selected.has(l.id) ? " selected" : ""),
       onclick: () => toggleSelect(l.id),
@@ -565,6 +586,10 @@ function renderComparePicker() {
   });
   renderCompareCharts();
 }
+
+// Add event listeners for compare filters
+$("#compare-search")?.addEventListener("input", renderComparePicker);
+$("#compare-country")?.addEventListener("change", renderComparePicker);
 
 function toggleSelect(id) {
   if (state.selected.has(id)) state.selected.delete(id);
