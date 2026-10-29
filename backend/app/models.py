@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     Float,
@@ -239,3 +240,78 @@ class SpeechTranscript(Base):
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     leader = relationship("Leader")
+
+
+# ===========================================================================
+# Official API Data (Brazil, US, EU, etc.)
+# ===========================================================================
+class VotingRecord(Base):
+    """Official voting records from government APIs."""
+
+    __tablename__ = "voting_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    leader_id = Column(Integer, ForeignKey("leaders.id"), nullable=False)
+    
+    # Vote details
+    proposal_id = Column(String, index=True, nullable=True)  # ID of the bill/proposal
+    proposal_title = Column(String, nullable=True)
+    vote = Column(String, nullable=True)  # "sim", "nao", "abstencao", etc.
+    vote_date = Column(DateTime, nullable=True)
+    
+    # Source
+    source = Column(String, nullable=True)  # e.g., "Câmara dos Deputados", "Senado"
+    source_url = Column(String, nullable=True)
+    
+    created_at = Column(DateTime, default=utcnow)
+
+
+class Proposal(Base):
+    """Proposals and legislation sponsored by leaders."""
+
+    __tablename__ = "proposals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    leader_id = Column(Integer, ForeignKey("leaders.id"), nullable=False)
+    
+    # Proposal details
+    proposal_id = Column(String, index=True, nullable=True)
+    title = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+    type = Column(String, nullable=True)  # "PL", "PEC", "bill", etc.
+    status = Column(String, nullable=True)  # "aprovada", "rejeitada", "em tramitação"
+    presentation_date = Column(DateTime, nullable=True)
+    
+    # Source
+    source = Column(String, nullable=True)
+    source_url = Column(String, nullable=True)
+    
+    created_at = Column(DateTime, default=utcnow)
+
+
+class ExpenseRecord(Base):
+    """Detailed expense records with supplier information."""
+
+    __tablename__ = "expense_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    leader_id = Column(Integer, ForeignKey("leaders.id"), nullable=False)
+    
+    # Expense details
+    expense_type = Column(String, nullable=True)  # "gabinete", "CEAP", "campanha", etc.
+    amount = Column(Float, nullable=True)
+    currency = Column(String, default="BRL")
+    date = Column(DateTime, nullable=True)
+    year = Column(Integer, index=True, nullable=True)
+    
+    # Supplier details
+    supplier_name = Column(String, nullable=True)
+    supplier_cnpj = Column(String, nullable=True)
+    description = Column(String, nullable=True)
+    receipt_url = Column(String, nullable=True)  # Link to receipt/invoice
+    
+    # Source
+    source = Column(String, nullable=True)
+    source_url = Column(String, nullable=True)
+    
+    created_at = Column(DateTime, default=utcnow)
