@@ -16,6 +16,7 @@ from .routers.brazil import router as brazil_router
 from .routers.representation import router as representation_router
 from .routers.proposals import router as proposals_router
 from .routers.expenses import router as expenses_router
+from .routers.voting import router as voting_router
 from .seed_financial import seed_financial_data
 
 app = FastAPI(
@@ -47,6 +48,7 @@ app.include_router(brazil_router)
 app.include_router(representation_router)
 app.include_router(proposals_router)
 app.include_router(expenses_router)
+app.include_router(voting_router)
 
 
 @app.on_event("startup")

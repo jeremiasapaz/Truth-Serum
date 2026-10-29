@@ -21,6 +21,7 @@
       <button class="tab" data-view="compare">Compare</button>
       <button class="tab" data-view="country" id="tab-country">Country Impact</button>
       <button class="tab" data-view="financial" id="tab-financial">Financial Transparency</button>
+      <button class="tab" data-view="official" id="tab-official">Official Data</button>
       <button class="tab" data-view="videos" id="tab-videos">Videos</button>
       <button class="tab" data-view="transcripts" id="tab-transcripts">Speech Transcripts</button>
       <button class="tab" data-view="sources" id="tab-sources">Sources</button>
@@ -128,6 +129,14 @@
       <div id="financial-grid" class="leader-grid" style="padding:20px 24px"></div>
     </section>
 
+    <!-- Official Data -->
+    <section id="view-official" class="view">
+      <div class="compare-bar">
+        <h2>Official Government Data <span class="muted">(Voting Records, Proposals, Expenses from Official APIs)</span></h2>
+      </div>
+      <div id="official-grid" class="leader-grid" style="padding:20px 24px"></div>
+    </section>
+
     <!-- Speech Transcripts -->
     <section id="view-transcripts" class="view">
       <div class="compare-bar">
@@ -178,6 +187,6 @@
     </div>
   </div>
 
-  <script src="/static/app.js?v=26"></script>
+  <script src="/static/app.js?v=27"></script>
 </body>
 </html>

@@ -226,6 +226,7 @@ $$(".tab").forEach((t) =>
     if (t.dataset.view === "country") renderCountryTab();
     if (t.dataset.view === "transcripts") renderTranscripts();
     if (t.dataset.view === "financial") renderFinancial();
+    if (t.dataset.view === "official") renderOfficial();
     if (t.dataset.view === "videos") renderVideos();
     if (t.dataset.view === "sources") renderSources();
   })
@@ -926,6 +927,128 @@ async function renderFinancial() {
     root.append(el("div", { class: "empty" },
       el("h3", {}, "Error loading financial data"),
       el("p", { class: "muted" }, String(e))));
+  }
+}
+
+// ====================== Official Government Data ======================
+async function renderOfficial() {
+  const root = $("#official-grid");
+  root.innerHTML = "";
+  
+  try {
+    // Get all leaders to show which have official data
+    const leaders = await api("/api/leaders");
+    
+    if (leaders.length === 0) {
+      root.append(el("div", { class: "empty" },
+        el("h3", {}, "No leaders yet"),
+        el("p", { class: "muted" }, "Official government data coming soon. This will show voting records, proposals, and expenses from official APIs.")));
+      return;
+    }
+    
+    // Show leaders grouped by country
+    const byCountry = {};
+    leaders.forEach((l) => {
+      if (!byCountry[l.country]) byCountry[l.country] = [];
+      byCountry[l.country].push(l);
+    });
+    
+    Object.entries(byCountry).forEach(([country, countryLeaders]) => {
+      const section = el("div", { class: "country-section" },
+        el("h3", {}, country),
+        el("div", { class: "leader-grid" }, countryLeaders.map((l) =>
+          el("div", { class: "leader-card" },
+            el("div", { class: "lc-head" },
+              el("h3", {}, l.name),
+              el("div", { class: "sub" }, l.country)),
+            el("div", { class: "lc-body" },
+              el("div", { class: "stat-row" },
+                el("span", { class: "label" }, "Office:"),
+                el("span", { class: "value" }, l.country)),
+              el("div", { class: "stat-row" },
+                el("span", { class: "label" }, "Political Affiliation:"),
+                el("span", { class: "value" }, l.political_affiliation || "N/A")),
+              el("div", { class: "muted", style: "margin-top:8px" }, "Official data available for:"),
+              el("ul", { style: "margin:8px 0 0 20px" },
+                el("li", {}, "Voting Records"),
+                el("li", {}, "Proposals"),
+                el("li", {}, "Expenses")),
+            el("div", { class: "lc-actions" },
+              el("button", { class: "btn secondary", onclick: () => showOfficialData(l.id, l.name) }, "View Official Data"))))));
+      root.append(section);
+    });
+  } catch (e) {
+    root.append(el("div", { class: "empty" },
+      el("h3", {}, "Error loading official data"),
+      el("p", { class: "muted" }, String(e))));
+  }
+}
+
+async function showOfficialData(leaderId, leaderName) {
+  const panel = $("#voting-panel");
+  const modal = $("#voting-modal");
+  
+  panel.innerHTML = el("div", { class: "loading" }, "Loading official data...").outerHTML;
+  modal.classList.add("show");
+  
+  try {
+    // Fetch voting records, proposals, and expenses
+    const [votingRecords, proposals, expenses] = await Promise.all([
+      api(`/api/voting/leader/${leaderId}`).catch(() => ({ total: 0, records: [] })),
+      api(`/api/proposals/leader/${leaderId}`).catch(() => ({ total: 0, proposals: [] })),
+      api(`/api/expenses/leader/${leaderId}`).catch(() => ({ total: 0, expenses: [] }))
+    ]);
+    
+    panel.innerHTML = "";
+    panel.append(el("div", { class: "modal-header" },
+      el("h2", {}, `Official Data: ${leaderName}`),
+      el("button", { class: "btn secondary", onclick: () => modal.classList.remove("show") }, "Close")));
+    
+    // Voting Records
+    panel.append(el("h3", {}, "Voting Records"));
+    if (votingRecords.total > 0) {
+      panel.append(el("div", { class: "data-list" },
+        votingRecords.records.map((r) =>
+          el("div", { class: "data-item" },
+            el("div", { class: "data-title" }, r.proposal_title || "Unknown Proposal"),
+            el("div", { class: "data-meta" }, `Vote: ${r.vote} | Date: ${new Date(r.vote_date).toLocaleDateString()}`),
+            r.source_url ? el("a", { href: r.source_url, target: "_blank", class: "btn secondary" }, "View Source") : null))));
+    } else {
+      panel.append(el("p", { class: "muted" }, "No voting records available"));
+    }
+    
+    // Proposals
+    panel.append(el("h3", {}, "Proposals"));
+    if (proposals.total > 0) {
+      panel.append(el("div", { class: "data-list" },
+        proposals.proposals.map((p) =>
+          el("div", { class: "data-item" },
+            el("div", { class: "data-title" }, p.title),
+            el("div", { class: "data-meta" }, `Type: ${p.type} | Status: ${p.status}`),
+            p.presentation_date ? el("div", { class: "data-meta" }, `Date: ${new Date(p.presentation_date).toLocaleDateString()}`) : null,
+            p.source_url ? el("a", { href: p.source_url, target: "_blank", class: "btn secondary" }, "View Source") : null))));
+    } else {
+      panel.append(el("p", { class: "muted" }, "No proposals available"));
+    }
+    
+    // Expenses
+    panel.append(el("h3", {}, "Expenses"));
+    if (expenses.total > 0) {
+      panel.append(el("div", { class: "data-list" },
+        expenses.expenses.map((e) =>
+          el("div", { class: "data-item" },
+            el("div", { class: "data-title" }, e.description || "Unknown Expense"),
+            el("div", { class: "data-meta" }, `Amount: ${e.currency} ${e.amount?.toLocaleString()} | Type: ${e.expense_type}`),
+            e.supplier_name ? el("div", { class: "data-meta" }, `Supplier: ${e.supplier_name}`) : null,
+            e.receipt_url ? el("a", { href: e.receipt_url, target: "_blank", class: "btn secondary" }, "View Receipt") : null))));
+    } else {
+      panel.append(el("p", { class: "muted" }, "No expense records available"));
+    }
+    
+  } catch (e) {
+    panel.innerHTML = el("div", { class: "empty" },
+      el("h3", {}, "Error loading official data"),
+      el("p", { class: "muted" }, String(e))).outerHTML;
   }
 }
 
